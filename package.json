@@ -1,0 +1,45 @@
+{
+  "name": "@esri/koop-provider-hub-api",
+  "version": "0.0.0",
+  "description": "A Koop provider plugin to ues the ArcGIS Hub API as a data source",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">= 12.0 <15"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/faker": "^5.5.7",
+    "@types/jest": "~26.0.23",
+    "@types/node": "~14.14.45",
+    "@typescript-eslint/eslint-plugin": "~4.28.2",
+    "@typescript-eslint/parser": "~4.28.2",
+    "eslint": "~7.30.0",
+    "eslint-config-prettier": "~8.3.0",
+    "eslint-plugin-jest": "~24.3.6",
+    "faker": "^5.5.3",
+    "jest": "~27.0.6",
+    "prettier": "~2.3.2",
+    "rimraf": "~3.0.2",
+    "ts-jest": "~27.0.3",
+    "tsutils": "~3.21.0",
+    "typescript": "~4.3.5"
+  },
+  "scripts": {
+    "start": "node build/src/index.js",
+    "clean": "rimraf coverage build tmp",
+    "prebuild": "npm run lint",
+    "build": "tsc -p tsconfig.release.json",
+    "build:watch": "tsc -w -p tsconfig.release.json",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "jest --coverage",
+    "test:watch": "jest --watch"
+  },
+  "author": "Andrew Tate <atate@esri.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "tslib": "~2.3.0"
+  },
+  "volta": {
+    "node": "14.16.1"
+  }
+}
