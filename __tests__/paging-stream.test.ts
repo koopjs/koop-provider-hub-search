@@ -2,18 +2,18 @@ import * as faker from 'faker';
 import { PagingStream } from '../src/paging-stream';
 
 describe('paging stream', () => {
-  let makeRequestSpy: jest.Mock;
-  let streamResponseSpy: jest.Mock;
-  let getNextRequestSpy: jest.Mock;
+  let loadPageSpy: jest.Mock;
+  let streamPageSpy: jest.Mock;
+  let getNextPageSpy: jest.Mock;
 
   beforeEach(() => {
-    makeRequestSpy = jest.fn();
-    streamResponseSpy = jest.fn();
-    getNextRequestSpy = jest.fn();
-  })
+    loadPageSpy = jest.fn();
+    streamPageSpy = jest.fn();
+    getNextPageSpy = jest.fn();
+  });
 
   it('loads and streams several pages', () => {
-    const firstRequest = faker.internet.url();
+    const firstPage = faker.internet.url();
 
     const datasets = new Array(12).fill(null).map(() => {
       return { id: faker.datatype.uuid() };
@@ -61,19 +61,19 @@ describe('paging stream', () => {
     ];
 
     let requestCounter = 0;
-    makeRequestSpy.mockImplementation(() => {
+    loadPageSpy.mockImplementation(() => {
       const res = Promise.resolve(responses[requestCounter]);
       requestCounter++;
       return res;
     });
-    streamResponseSpy.mockImplementation((response, push) => response.data.forEach(push));
-    getNextRequestSpy.mockImplementation(response => response.links.next);
+    streamPageSpy.mockImplementation((response, push) => response.data.forEach(push));
+    getNextPageSpy.mockImplementation(response => response.links.next);
 
     const stream = new PagingStream({
-      firstRequest,
-      makeRequest: makeRequestSpy,
-      streamResponse: streamResponseSpy,
-      getNextRequest: getNextRequestSpy
+      firstPage,
+      loadPage: loadPageSpy,
+      streamPage: streamPageSpy,
+      getNextPage: getNextPageSpy
     });
 
     let dataCounter = 0;
@@ -86,8 +86,8 @@ describe('paging stream', () => {
       try {
         // get all the mock requests and make sure they got passed to makeRequest
         // in the right order
-        const mockRequestUrls = [firstRequest, ...responses.map(res => res.links.next).filter(Boolean)];
-        mockRequestUrls.forEach((url, i) => expect(makeRequestSpy).toHaveBeenNthCalledWith(i+1, url))
+        const mockRequestUrls = [firstPage, ...responses.map(res => res.links.next).filter(Boolean)];
+        mockRequestUrls.forEach((url, i) => expect(loadPageSpy).toHaveBeenNthCalledWith(i+1, url));
         resolve('Test Complete');
       } catch (err) {
         reject(err);
