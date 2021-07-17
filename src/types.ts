@@ -35,14 +35,14 @@ export interface ISearchApiOptions {
    *   size: 10
    * }
    */
-  aggs?: Record<string, string>;
+  aggs?: Record<string, string|number>;
 
   /**
    * Sort by a particular field.
    */
   sort?: {
     field: string,
-    order: 'asc'|'desc'
+    order?: 'asc'|'desc'
   };
 
   /**
