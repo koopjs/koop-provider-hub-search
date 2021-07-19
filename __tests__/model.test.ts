@@ -46,8 +46,6 @@ describe('HubApiModel', () => {
     expect(firstUrl.searchParams.get('q')).toBe(req.app.locals.searchOptions.query);
 
     // Test loadPage
-    // Set up fetch-mock
-
     const pageUrl = faker.internet.url();
     const fakeResponse = {
       data: [
