@@ -17,6 +17,7 @@
     "eslint-config-prettier": "~8.3.0",
     "eslint-plugin-jest": "~24.3.6",
     "faker": "^5.5.3",
+    "fetch-mock-jest": "^1.5.1",
     "jest": "~27.0.6",
     "prettier": "~2.3.2",
     "rimraf": "~3.0.2",
@@ -37,6 +38,8 @@
   "author": "Andrew Tate <atate@esri.com>",
   "license": "Apache-2.0",
   "dependencies": {
+    "@types/node-fetch": "^2.5.11",
+    "node-fetch": "^2.6.1",
     "tslib": "~2.3.0"
   },
   "volta": {
