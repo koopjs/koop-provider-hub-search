@@ -16,7 +16,7 @@ export class HubApiModel {
     const siteUrl = request.app.locals.hubSiteUrl || this._options.defaultSiteUrl;
 
     const searchApiStream = new PagingStream({
-      firstPage: `${siteUrl}?${getSearchQueryParams(searchOptions)}`,
+      firstPage: `${siteUrl}/api/v3/datasets?${getSearchQueryParams(searchOptions)}`,
 
       loadPage: (url: string) => fetch(url).then(res => res.json()),
 

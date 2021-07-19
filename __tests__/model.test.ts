@@ -42,6 +42,7 @@ describe('HubApiModel', () => {
     // Test firstPage
     const firstUrl = new URL(firstPage);
     expect(firstUrl.origin).toBe(hubSiteUrl);
+    expect(firstUrl.pathname).toBe('/api/v3/datasets');
     expect(firstUrl.searchParams.get('q')).toBe(req.app.locals.searchOptions.query);
 
     // Test loadPage
