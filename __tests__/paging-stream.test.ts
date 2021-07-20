@@ -4,12 +4,12 @@ import { PagingStream } from '../src/paging-stream';
 describe('paging stream', () => {
   let loadPageSpy: jest.Mock;
   let streamPageSpy: jest.Mock;
-  let getNextPageSpy: jest.Mock;
+  let getNextPageParamsSpy: jest.Mock;
 
   beforeEach(() => {
     loadPageSpy = jest.fn();
     streamPageSpy = jest.fn();
-    getNextPageSpy = jest.fn();
+    getNextPageParamsSpy = jest.fn();
   });
 
   it('loads and streams several pages', () => {
@@ -67,13 +67,13 @@ describe('paging stream', () => {
       return res;
     });
     streamPageSpy.mockImplementation((response, push) => response.data.forEach(push));
-    getNextPageSpy.mockImplementation(response => response.links.next);
+    getNextPageParamsSpy.mockImplementation(response => response.links.next);
 
     const stream = new PagingStream({
       firstPage,
       loadPage: loadPageSpy,
       streamPage: streamPageSpy,
-      getNextPage: getNextPageSpy
+      getNextPageParams: getNextPageParamsSpy
     });
 
     let dataCounter = 0;

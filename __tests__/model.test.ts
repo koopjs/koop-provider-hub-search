@@ -10,14 +10,10 @@ describe('HubApiModel', () => {
   const MockedPagingStream = PagingStream as unknown as jest.Mock<PagingStream>;
 
   it('configures and returns a paging stream', async () => {
-    const hubSiteUrl = faker.internet.url();
-
-    const model = new HubApiModel({
-      defaultSiteUrl: hubSiteUrl
-    });
+    const model = new HubApiModel();
 
     const req = {
-      app: {
+      res: {
         locals: {
           searchOptions: {
             query: faker.random.word()
@@ -36,14 +32,14 @@ describe('HubApiModel', () => {
       firstPage,
       loadPage,
       streamPage,
-      getNextPage
+      getNextPageParams
    } = MockedPagingStream.mock.calls[0][0];
 
     // Test firstPage
     const firstUrl = new URL(firstPage);
-    expect(firstUrl.origin).toBe(hubSiteUrl);
+    expect(firstUrl.origin).toBe('https://hub.arcgis.com');
     expect(firstUrl.pathname).toBe('/api/v3/datasets');
-    expect(firstUrl.searchParams.get('q')).toBe(req.app.locals.searchOptions.query);
+    expect(firstUrl.searchParams.get('q')).toBe(req.res.locals.searchOptions.query);
 
     // Test loadPage
     const pageUrl = faker.internet.url();
@@ -73,7 +69,7 @@ describe('HubApiModel', () => {
       (dataset, i) => expect(pushMock).toHaveBeenNthCalledWith(i+1, dataset)
     );
 
-    // Test getNextPage
-    expect(getNextPage(mockPage)).toBe(mockPage.links.next);
+    // Test getNextPageParams
+    expect(getNextPageParams(mockPage)).toBe(mockPage.links.next);
   });
 });
