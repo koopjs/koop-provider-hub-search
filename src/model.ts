@@ -4,19 +4,15 @@ import { ISearchApiOptions } from './types';
 import { getSearchQueryParams } from './get-search-query-params';
 
 export class HubApiModel {
-  private _options: any;
-
-  constructor (options: any) {
-    this._options = options;
-  }
 
   getStream (request: Request) {
-    // TODO revisit how we get these search options
-    const searchOptions: ISearchApiOptions = request.app.locals.searchOptions;
-    const siteUrl = request.app.locals.hubSiteUrl || this._options.defaultSiteUrl;
+    const searchOptions: ISearchApiOptions = request.res.locals.searchOptions;
+
+    // TODO support multiple environments
+    const portalUrl = 'https://hub.arcgis.com';
 
     const searchApiStream = new PagingStream({
-      firstPage: `${siteUrl}/api/v3/datasets?${getSearchQueryParams(searchOptions)}`,
+      firstPage: `${portalUrl}/api/v3/datasets?${getSearchQueryParams(searchOptions)}`,
 
       loadPage: (url: string) => fetch(url).then(res => res.json()),
 
@@ -27,4 +23,7 @@ export class HubApiModel {
 
     return searchApiStream;
   }
+
+  // TODO remove when koop-core no longer requires
+  getData () {}
 }

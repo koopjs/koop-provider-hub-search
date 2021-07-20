@@ -1,7 +1,3 @@
-export interface RegistrationOptions {
-  defaultSiteUrl: string;
-}
-
 export interface ISearchApiOptions {
   /**
    * Fuzzy-search query string

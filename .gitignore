@@ -6,6 +6,9 @@ npm-debug.log*
 # Dependencies
 node_modules/
 
+# Local for now
+example-app/
+
 # Coverage
 coverage
 
