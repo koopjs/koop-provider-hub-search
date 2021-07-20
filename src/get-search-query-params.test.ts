@@ -1,4 +1,4 @@
-import { getSearchQueryParams } from "../src/get-search-query-params";
+import { getSearchQueryParams } from "./get-search-query-params";
 
 describe('getSearchQueryParams', () => {
   it('includes a search query', () => {
