@@ -28,17 +28,12 @@ export class PagingStream extends Readable {
   }
 
   async _read () {
-    // make the request
     const response = await this._loadPage(this._nextPageParams);
 
-    // next request options... important that we do this before we call this.push
-    // because that will open us up for another call to this method
     this._nextPageParams = this._getNextPageParams(response);
 
-    // process response
     this._streamPage(response, this.push.bind(this));
 
-    // end stream if done
     if (!this._nextPageParams) {
       this.push(null);
     }
