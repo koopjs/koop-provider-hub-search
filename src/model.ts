@@ -18,7 +18,7 @@ export class HubApiModel {
 
       streamPage: (response, push) => response.data.forEach(dataset => push(dataset)),
 
-      getNextPage: response => response.links.next
+      getNextPageParams: response => response.links.next
     });
 
     return searchApiStream;

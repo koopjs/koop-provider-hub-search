@@ -4,42 +4,42 @@ export interface PagingStreamOptions {
   firstPage: any;
   loadPage: (request: any) => Promise<any>;
   streamPage: (response: any, push: typeof Readable.prototype.push) => any;
-  getNextPage: (response: any) => any;
+  getNextPageParams: (response: any) => any;
 }
 
 export class PagingStream extends Readable {
-  private _nextPage;
+  private _nextPageParams;
   private _loadPage;
   private _streamPage;
-  private _getNextPage;
+  private _getNextPageParams;
 
   constructor({
     firstPage,
     loadPage,
     streamPage,
-    getNextPage
+    getNextPageParams
   }: PagingStreamOptions) {
     super({ objectMode: true });
 
-    this._nextPage = firstPage;
+    this._nextPageParams = firstPage;
     this._loadPage = loadPage;
     this._streamPage = streamPage;
-    this._getNextPage = getNextPage;
+    this._getNextPageParams = getNextPageParams;
   }
 
   async _read () {
     // make the request
-    const response = await this._loadPage(this._nextPage);
+    const response = await this._loadPage(this._nextPageParams);
 
     // next request options... important that we do this before we call this.push
     // because that will open us up for another call to this method
-    this._nextPage = this._getNextPage(response);
+    this._nextPageParams = this._getNextPageParams(response);
 
     // process response
     this._streamPage(response, this.push.bind(this));
 
     // end stream if done
-    if (!this._nextPage) {
+    if (!this._nextPageParams) {
       this.push(null);
     }
   }
