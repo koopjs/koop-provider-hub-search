@@ -10,8 +10,9 @@ export class HubApiModel {
   getStream (request: Request) {
     const searchRequest: IContentSearchRequest = request.res.locals.searchRequest;
 
-    // TODO support multiple environments
-    _.set(searchRequest, 'options.portal', 'https://www.arcgis.com');
+    if (!_.has(searchRequest, 'options.portal')) {
+      _.set(searchRequest, 'options.portal', 'https://www.arcgis.com');
+    }
 
     const searchApiStream = new PagingStream({
       firstPageParams: searchRequest,

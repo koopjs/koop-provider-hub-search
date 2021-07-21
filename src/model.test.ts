@@ -19,6 +19,9 @@ describe('HubApiModel', () => {
       filter: {
         terms: faker.random.words()
       },
+      options: {
+        portal: 'https://qaext.arcgis.com'
+      }
     };
     const req = {
       res: {
@@ -43,7 +46,7 @@ describe('HubApiModel', () => {
 
     // Test firstPageParams
     expect(firstPageParams.filter.terms).toBe(searchRequest.filter.terms);
-    expect(firstPageParams.options.portal).toBe('https://www.arcgis.com');
+    expect(firstPageParams.options.portal).toBe(searchRequest.options.portal);
 
     // Test loadPage
     mockedSearchContent.mockResolvedValue('VALUE FROM SEARCH CONTENT' as unknown as IContentSearchResponse);
@@ -89,5 +92,33 @@ describe('HubApiModel', () => {
     } as IContentSearchResponse;
 
     expect(getNextPageParams(withoutNextPage)).toBeFalsy();
+  });
+
+  it('defaults portal URL to https://www.arcgis.com', async () => {
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms: faker.random.words()
+      },
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    const stream = model.getStream(req);
+
+    expect(stream).toBeInstanceOf(PagingStream);
+    expect(MockedPagingStream).toHaveBeenCalledTimes(1);
+
+    const { firstPageParams } = MockedPagingStream.mock.calls[0][0];
+
+    // Test firstPageParams
+    expect(firstPageParams.filter.terms).toBe(searchRequest.filter.terms);
+    expect(firstPageParams.options.portal).toBe('https://www.arcgis.com');
   });
 });
