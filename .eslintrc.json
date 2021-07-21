@@ -9,6 +9,7 @@
     "project": "tsconfig.json",
     "sourceType": "module"
   },
+  "ignorePatterns": ["src/**/*.test.ts"],
   "plugins": ["@typescript-eslint", "jest"],
   "extends": [
     "eslint:recommended",

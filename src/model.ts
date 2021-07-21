@@ -1,24 +1,32 @@
+require('isomorphic-fetch');
+import * as _ from 'lodash';
 import { Request } from 'express';
 import { PagingStream } from './paging-stream';
-import { ISearchApiOptions } from './types';
-import { getSearchQueryParams } from './get-search-query-params';
+import { searchContent } from '@esri/hub-search';
+import { IContentSearchRequest } from './types';
 
 export class HubApiModel {
 
   getStream (request: Request) {
-    const searchOptions: ISearchApiOptions = request.res.locals.searchOptions;
+    const searchRequest: IContentSearchRequest = request.res.locals.searchRequest;
 
     // TODO support multiple environments
-    const portalUrl = 'https://hub.arcgis.com';
+    _.set(searchRequest, 'options.portal', 'https://www.arcgis.com');
 
     const searchApiStream = new PagingStream({
-      firstPage: `${portalUrl}/api/v3/datasets?${getSearchQueryParams(searchOptions)}`,
+      firstPageParams: searchRequest,
 
-      loadPage: (url: string) => fetch(url).then(res => res.json()),
+      loadPage: (params: IContentSearchRequest | any) => {
+        if (params.next) {
+          return params.next();
+        }
 
-      streamPage: (response, push) => response.data.forEach(dataset => push(dataset)),
+        return searchContent(params); // first page request
+      },
 
-      getNextPageParams: response => response.links.next
+      streamPage: (response, push) => response.results.forEach(result => push(result)),
+
+      getNextPageParams: response => response.hasNext && response.next
     });
 
     return searchApiStream;

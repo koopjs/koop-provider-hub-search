@@ -13,7 +13,7 @@ describe('paging stream', () => {
   });
 
   it('loads and streams several pages', () => {
-    const firstPage = faker.internet.url();
+    const firstPageParams = faker.internet.url();
 
     const datasets = new Array(12).fill(null).map(() => {
       return { id: faker.datatype.uuid() };
@@ -70,7 +70,7 @@ describe('paging stream', () => {
     getNextPageParamsSpy.mockImplementation(response => response.links.next);
 
     const stream = new PagingStream({
-      firstPage,
+      firstPageParams,
       loadPage: loadPageSpy,
       streamPage: streamPageSpy,
       getNextPageParams: getNextPageParamsSpy
@@ -86,8 +86,37 @@ describe('paging stream', () => {
       try {
         // get all the mock requests and make sure they got passed to makeRequest
         // in the right order
-        const mockRequestUrls = [firstPage, ...responses.map(res => res.links.next).filter(Boolean)];
+        const mockRequestUrls = [firstPageParams, ...responses.map(res => res.links.next).filter(Boolean)];
         mockRequestUrls.forEach((url, i) => expect(loadPageSpy).toHaveBeenNthCalledWith(i+1, url));
+        resolve('Test Complete');
+      } catch (err) {
+        reject(err);
+      }
+    }));
+  });
+
+  it('destroys stream if error occurs', () => {
+    const requestError = new Error('REQUEST FAILED');
+    loadPageSpy.mockRejectedValue(requestError);
+    streamPageSpy.mockImplementation((response, push) => response.data.forEach(push));
+    getNextPageParamsSpy.mockImplementation(response => response.links.next);
+
+    const stream = new PagingStream({
+      firstPageParams: null,
+      loadPage: loadPageSpy,
+      streamPage: streamPageSpy,
+      getNextPageParams: getNextPageParamsSpy
+    });
+
+    stream.on('data', () => {
+      throw Error('Stream should not emit data after erroring!')
+    });
+
+    return new Promise((resolve, reject) => stream.on('error', (err) => {
+      try {
+        expect(err).toEqual(requestError);
+        expect(streamPageSpy).not.toHaveBeenCalled();
+        expect(getNextPageParamsSpy).not.toHaveBeenCalled();
         resolve('Test Complete');
       } catch (err) {
         reject(err);

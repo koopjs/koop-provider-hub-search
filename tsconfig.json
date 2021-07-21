@@ -22,5 +22,8 @@
   "include": [
     "src/**/*",
     "./package.json"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
   ]
 }
