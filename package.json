@@ -1,7 +1,7 @@
 {
-  "name": "@esri/koop-provider-hub-api",
+  "name": "@esri/koop-provider-hub-search",
   "version": "0.0.0",
-  "description": "A Koop provider plugin to ues the ArcGIS Hub API as a data source",
+  "description": "A Koop provider plugin to ues the ArcGIS Hub Search API as a data source",
   "main": "src/index.js",
   "engines": {
     "node": ">= 12.0 <15"
