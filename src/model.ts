@@ -1,9 +1,9 @@
 require('isomorphic-fetch');
+require('isomorphic-form-data');
 import * as _ from 'lodash';
 import { Request } from 'express';
 import { PagingStream } from './paging-stream';
-import { searchContent } from '@esri/hub-search';
-import { IContentSearchRequest } from './types';
+import { IContentSearchRequest, IContentSearchResponse, searchContent } from '@esri/hub-search';
 
 export class HubApiModel {
 
@@ -17,9 +17,9 @@ export class HubApiModel {
     const searchApiStream = new PagingStream({
       firstPageParams: searchRequest,
 
-      loadPage: (params: IContentSearchRequest | any) => {
-        if (params.next) {
-          return params.next();
+      loadPage: (params: IContentSearchRequest | IContentSearchResponse['next']) => {
+        if (typeof params === 'function') {
+          return params();
         }
 
         return searchContent(params); // first page request

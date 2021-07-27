@@ -2,8 +2,7 @@ import * as faker from 'faker';
 import { Request } from 'express';
 import { HubApiModel } from '../src/model';
 import { PagingStream } from "../src/paging-stream";
-import { searchContent } from "@esri/hub-search";
-import { IContentSearchRequest, IContentSearchResponse } from './types';
+import { searchContent, IContentSearchRequest, IContentSearchResponse } from "@esri/hub-search";
 jest.mock('../src/paging-stream');
 jest.mock('@esri/hub-search');
 
@@ -51,11 +50,9 @@ describe('HubApiModel', () => {
     // Test loadPage
     mockedSearchContent.mockResolvedValue('VALUE FROM SEARCH CONTENT' as unknown as IContentSearchResponse);
 
-    const paramsWithNext = {
-      next: jest.fn().mockResolvedValue('VALUE FROM NEXT')
-    };
-    expect(await loadPage(paramsWithNext)).toBe('VALUE FROM NEXT');
-    expect(paramsWithNext.next).toHaveBeenCalledTimes(1);
+    const nextFunctionParams = jest.fn().mockResolvedValue('VALUE FROM NEXT')
+    expect(await loadPage(nextFunctionParams)).toBe('VALUE FROM NEXT');
+    expect(nextFunctionParams).toHaveBeenCalledTimes(1);
 
     const paramsWithoutNext = {
       foo: 'bar'
