@@ -7,4 +7,4 @@ export = {
     disableIdParam: true,
     Model: HubApiModel,
     version
-}
+};
