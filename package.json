@@ -1,6 +1,6 @@
 {
-  "name": "@esri/koop-provider-hub-search",
-  "version": "0.0.0",
+  "name": "@koopjs/koop-provider-hub-search",
+  "version": "1.0.0",
   "description": "A Koop provider plugin to ues the ArcGIS Hub Search API as a data source",
   "main": "src/index.js",
   "engines": {
@@ -27,10 +27,11 @@
   },
   "scripts": {
     "start": "node build/src/index.js",
-    "dev": "npm run prebuild && npm run build && cd example-app && node src/index.js",
+    "dev": "npm run build && cd example-app && node src/index.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "rm -rf ./build && npm run lint",
-    "build": "tsc -p tsconfig.release.json",
+    "build": "npm run prebuild && tsc -p tsconfig.release.json",
+    "release": "npm run build && npm publish ./build --access=public",
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
