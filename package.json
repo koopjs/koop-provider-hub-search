@@ -31,7 +31,7 @@
   },
   "scripts": {
     "start": "node build/src/index.js",
-    "dev": "npm run build && cd example-app && node src/index.js",
+    "dev": "npm run build && cd example-app && npm i && node src/index.js",
     "clean": "rimraf coverage build tmp",
     "prebuild": "rm -rf ./build && npm run lint",
     "build": "npm run prebuild && tsc -p tsconfig.release.json",
@@ -39,7 +39,8 @@
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
     "test": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "prepack": "cp README.md LICENSE ./build"
   },
   "author": "Andrew Tate <atate@esri.com>",
   "license": "Apache-2.0",

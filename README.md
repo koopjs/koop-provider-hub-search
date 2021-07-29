@@ -5,9 +5,9 @@
 [![APLv2][license-badge]][license]
 [![Build Status - GitHub Actions][gha-badge]][gha-ci]
 
-This is a Koop provider that uses the Hub API as its data source.
+This is a Koop provider that extracts datasets from the ArcGIS Hub Search API.
 
-## Streaming All Datasets
+## Use - Streaming All Datasets
 This provider plugin currently only supports [streaming](https://nodejs.org/api/stream.html#stream_readable_streams) ALL datasets matching a given search query. It performs searches using the [`searchContent`](https://esri.github.io/hub.js/api/search/searchContent/) function from [`@esri/hub.js`](https://esri.github.io/hub.js/) and requests all pages from the API in order.
 
 ### Define Search Parameters
@@ -49,3 +49,17 @@ async handleRequest (req, res) {
     .pipe(res);
 }
 ```
+
+## Develop
+```sh
+# clone and install dependencies
+git clone https://github.com/koopjs/koop-output-dcat-ap-201
+cd koop-output-dcat-ap-201
+npm i
+
+# starts the example Koop app found in ./example-app.
+npm run dev
+```
+
+## Test
+Run the `npm t` commmand to spin up the automated tests.
