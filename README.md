@@ -1,4 +1,4 @@
-# Koop Provider Hub API
+# Koop Provider Hub Search
 
 [![TypeScript version][ts-badge]][typescript-4-3]
 [![Node.js version][nodejs-badge]][nodejs]
