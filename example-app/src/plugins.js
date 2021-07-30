@@ -1,4 +1,4 @@
-const HubSearchApi = require('@esri/koop-provider-hub-api')
+const HubSearchApi = require('@koopjs/koop-provider-hub-search')
 const StreamOutput = require('./output')
 
 // list different types of plugins in order
