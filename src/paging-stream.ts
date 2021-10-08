@@ -5,6 +5,7 @@ export interface PagingStreamOptions {
   loadPage: (request: any) => Promise<any>;
   streamPage: (response: any, push: typeof Readable.prototype.push) => any;
   getNextPageParams: (response: any) => any;
+  pageLimit: number;
 }
 
 export class PagingStream extends Readable {
@@ -12,12 +13,15 @@ export class PagingStream extends Readable {
   private _loadPage;
   private _streamPage;
   private _getNextPageParams;
+  private _pageLimit;
+  private _currPage = 0;
 
   constructor({
     firstPageParams,
     loadPage,
     streamPage,
-    getNextPageParams
+    getNextPageParams,
+    pageLimit = Number.MAX_SAFE_INTEGER
   }: PagingStreamOptions) {
     super({ objectMode: true });
 
@@ -25,12 +29,14 @@ export class PagingStream extends Readable {
     this._loadPage = loadPage;
     this._streamPage = streamPage;
     this._getNextPageParams = getNextPageParams;
+    this._pageLimit = pageLimit;
   }
 
   async _read () {
     let response: any;
     try {
       response = await this._loadPage(this._nextPageParams);
+      this._currPage++;
     } catch (err) {
       this.destroy(err);
       return;
@@ -40,7 +46,7 @@ export class PagingStream extends Readable {
 
     this._streamPage(response, this.push.bind(this));
 
-    if (!this._nextPageParams) {
+    if (!this._nextPageParams || this._currPage >= this._pageLimit) {
       this.push(null);
     }
   }
