@@ -5,7 +5,7 @@ export interface PagingStreamOptions {
   loadPage: (request: any) => Promise<any>;
   streamPage: (response: any, push: typeof Readable.prototype.push) => any;
   getNextPageParams: (response: any) => any;
-  pageLimit: number;
+  pageLimit?: number;
 }
 
 export class PagingStream extends Readable {
