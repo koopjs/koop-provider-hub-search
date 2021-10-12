@@ -9,6 +9,11 @@ export const getBatchingParams = async (request: IContentSearchRequest): Promise
   { pageSize: number, pagesPerBatch: number, numBatches: number }
 > => {
   const total: number = await fetchTotalResults(request);
+
+  if (!total || !Number.isInteger(total)) {
+    return { pageSize: 0, pagesPerBatch: 0, numBatches: 0 };
+  }
+
   const pageSize: number = getPageSize(request);
   const numBatches = getNumberOfBatches(total, pageSize);
   const pagesPerBatch: number = getPagesPerBatch(total, numBatches, pageSize);
@@ -36,7 +41,7 @@ const getPageSize = (request: IContentSearchRequest) => {
 };
 
 const getNumberOfBatches = (total: number, pageSize: number): number => {
-  const totalPages = Math.ceil(total / pageSize) || 1;
+  const totalPages = Math.ceil(total / pageSize);
   return Math.min(totalPages, MAX_NUM_BATCHES);
 };
 

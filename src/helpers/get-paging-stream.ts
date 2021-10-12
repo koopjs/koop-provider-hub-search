@@ -1,7 +1,7 @@
 import { IContentSearchRequest, IContentSearchResponse, searchContent } from "@esri/hub-search";
 import { PagingStream } from "../paging-stream";
 
-export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch: number): PagingStream => {
+export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch?: number): PagingStream => {
   return new PagingStream({
     firstPageParams: request,
 

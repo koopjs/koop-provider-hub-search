@@ -6,7 +6,7 @@ describe('getBatchPageKeys function', () => {
     const pageKeys = getBatchPageKeys(0, 5, 100);
     
     // Assert
-    expect(pageKeys).toEqual([]);
+    expect(pageKeys).toHaveLength(0);
   });
 
   it('returns the correct page key for a single batch', () => {
@@ -17,7 +17,7 @@ describe('getBatchPageKeys function', () => {
     });
 
     // Assert
-    expect(pageKeysAsObjects.length).toEqual(1);
+    expect(pageKeysAsObjects).toHaveLength(1);
     expect(pageKeysAsObjects[0]).toEqual({
       hub: {
         size: 100,
@@ -38,7 +38,7 @@ describe('getBatchPageKeys function', () => {
     });
 
     // Assert
-    expect(pageKeysAsObjects.length).toEqual(3);
+    expect(pageKeysAsObjects).toHaveLength(3);
     expect(pageKeysAsObjects[0]).toEqual({
       hub: {
         size: 100,
