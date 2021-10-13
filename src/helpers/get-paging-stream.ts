@@ -16,7 +16,7 @@ export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch?: 
 
     streamPage: (response, push) => response.data.forEach(result => push(result.attributes)),
 
-    getNextPageParams: response => response.meta?.next
+    getNextPageParams: response => response.meta?.next,
 
     pageLimit: pagesPerBatch
   });
