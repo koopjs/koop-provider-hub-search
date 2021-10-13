@@ -14,15 +14,13 @@ export const getBatchingParams = async (request: IContentSearchRequest): Promise
     return { pageSize: 0, pagesPerBatch: 0, numBatches: 0 };
   }
 
-  const pageSize: number = getPageSize(request);
+  const pageSize: number = getPageSize(_.get(request, 'options.page'));
   const numBatches = getNumberOfBatches(total, pageSize);
   const pagesPerBatch: number = getPagesPerBatch(total, numBatches, pageSize);
   return { pageSize, pagesPerBatch, numBatches };
 };
 
-const getPageSize = (request: IContentSearchRequest) => {
-  const page = _.get(request, 'options.page');
-
+const getPageSize = (page: string) => {
   if (!page) {
     return 100;
   }
