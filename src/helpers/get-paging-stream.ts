@@ -1,21 +1,22 @@
-import { IContentSearchRequest, IContentSearchResponse, searchContent } from "@esri/hub-search";
+import { IContentSearchRequest, searchDatasets } from "@esri/hub-search";
 import { PagingStream } from "../paging-stream";
 
 export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch?: number): PagingStream => {
   return new PagingStream({
     firstPageParams: request,
 
-    loadPage: (params: IContentSearchRequest | IContentSearchResponse['next']) => {
-      if (typeof params === 'function') {
-        return params();
+    loadPage: (params: IContentSearchRequest | string) => {
+      if (typeof params === 'string') {
+        return fetch(params)
+          .then(res => res.json());
       }
 
-      return searchContent(params); // first page request
+      return searchDatasets(params); // first page request
     },
 
-    streamPage: (response, push) => response.results.forEach(result => push(result)),
+    streamPage: (response, push) => response.data.forEach(result => push(result.attributes)),
 
-    getNextPageParams: response => response.hasNext && response.next,
+    getNextPageParams: response => response.meta?.next && response.meta.next,
 
     pageLimit: pagesPerBatch
   });

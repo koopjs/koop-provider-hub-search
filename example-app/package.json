@@ -44,7 +44,7 @@
     "url": "https://github.com:koopjs/koop-app-example.git"
   },
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node --inspect src/index.js",
     "start:dev": "koop serve --save --watch",
     "test": "standard && tape test/*.js | tap-spec"
   }
