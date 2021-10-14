@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## Unreleased
+## 1.0.2
 Added
 - Refactored streaming of documents to batch requests to Hub Search simultaneously [#4](https://github.com/koopjs/koop-provider-hub-search/pull/4)
 
