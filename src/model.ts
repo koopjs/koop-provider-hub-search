@@ -1,5 +1,6 @@
 require('isomorphic-fetch');
 require('isomorphic-form-data');
+
 import * as _ from 'lodash';
 import { Request } from 'express';
 import { IContentSearchRequest } from '@esri/hub-search';
@@ -17,6 +18,7 @@ export class HubApiModel {
 
     let pass = new PassThrough({ objectMode: true });
     let waiting = pagingStreams.length;
+
     for (const stream of pagingStreams) {
         stream.on('error', err => {
           console.error(err);
@@ -24,9 +26,9 @@ export class HubApiModel {
         });
         pass = stream.pipe(pass, { end: false });
         stream.once('end', () => {
-          waiting--;
+          --waiting;
           if (waiting === 0) {
-            pass.emit('end');
+            pass.end(() => {});
           }
         });
     }
