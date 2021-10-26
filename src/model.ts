@@ -19,6 +19,11 @@ export class HubApiModel {
     let pass = new PassThrough({ objectMode: true });
     let waiting = pagingStreams.length;
 
+    if (!waiting) {
+      pass.end(() => {});
+      return pass;
+    }
+
     for (const stream of pagingStreams) {
         stream.on('error', err => {
           console.error(err);
