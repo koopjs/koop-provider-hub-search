@@ -219,6 +219,59 @@ describe('HubApiModel', () => {
     }
   });
 
+  it('can handle 0 batches', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+  
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+  
+      await pipe(stream, pass);
+  
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
   it('stops streaming and throws error if underlying paging stream throws error', async () => {
     // Setup
     const terms = faker.random.words()
