@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 1.0.3
+Fixed
+- Fixed stream closing issue when no results are obtained [#6](https://github.com/koopjs/koop-provider-hub-search/pull/6)
+
 ## 1.0.2
 Added
 - Refactored streaming of documents to batch requests to Hub Search simultaneously [#4](https://github.com/koopjs/koop-provider-hub-search/pull/4)
