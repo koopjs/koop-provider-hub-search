@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 1.0.4
+Patch
+- Return a 400 error response explicitly if a client-provided field is invalid [#7](https://github.com/koopjs/koop-provider-hub-search/pull/7)
+
 ## 1.0.3
 Fixed
 - Fixed stream closing issue when no results are obtained [#6](https://github.com/koopjs/koop-provider-hub-search/pull/6)
