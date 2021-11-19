@@ -6,16 +6,23 @@ import { IContentSearchRequest } from "@esri/hub-search";
 import { PassThrough, pipeline } from 'stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
 import { promisify } from 'util';
+import { hubApiRequest, RemoteServerError } from '@esri/hub-common';
 
 jest.mock('@esri/hub-search');
 jest.mock('./helpers/get-batched-streams');
+jest.mock('@esri/hub-common', () => ({
+  ...(jest.requireActual('@esri/hub-common') as object),
+  hubApiRequest: jest.fn(),
+}));
 
 describe('HubApiModel', () => {
   // this is just to make the type checker happy
   const mockGetBatchStreams = getBatchedStreams as unknown as jest.MockedFunction<typeof getBatchedStreams>;
-  
+  const mockHubApiRequest = hubApiRequest as unknown as jest.MockedFunction<typeof hubApiRequest>;
+
   beforeEach(() => {
     mockGetBatchStreams.mockReset();
+    mockHubApiRequest.mockReset();
   });
 
   it('configures and returns a zipped concatenation of batched paging streams', async () => {
@@ -269,6 +276,146 @@ describe('HubApiModel', () => {
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
+    }
+  });
+
+  it('can validate and handle specifed fields', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        portal: 'https://qaext.arcgis.com',
+        fields: 'id'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 3;
+    const pagesPerBatch = 2;
+    const resultsPerPage = 3
+
+    const mockedResponses = new Array(batches).fill(null).map(() => {
+      return new Array(pagesPerBatch).fill(null).map(() => {
+        return new Array(resultsPerPage).fill(null).map(() => ({
+          id: faker.datatype.uuid()
+        }));
+      });
+    });
+
+    const mockedPagingStreams = mockedResponses.map((batchPages: any[]) => {
+      let currPage = 0;
+      return new PagingStream({
+        firstPageParams: {},
+        getNextPageParams: () => {
+          if (currPage >= batchPages.length) {
+            return null
+          } else {
+            return () => batchPages[currPage++];
+          }
+        },
+        loadPage: async (params) => {
+          if (typeof params === 'function') {
+            return params()
+          } else {
+            return batchPages[currPage++]
+          }
+        },
+        streamPage: (response, push) => {
+          response.forEach(result => push(result));
+        }
+      })
+    });
+
+    mockGetBatchStreams.mockResolvedValueOnce(mockedPagingStreams);
+    mockHubApiRequest.mockResolvedValue(['id']);
+  
+    // Test and Assert
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+  
+      await pipe(stream, pass);
+  
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
+      expect(mockHubApiRequest).toHaveBeenCalledTimes(1);
+      expect(mockHubApiRequest).toHaveBeenCalledWith('/fields');
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+      expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
+      expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
+      expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[1][0][0]);
+      expect(actualResponses[4]).toEqual(mockedResponses[1][0][1]);
+      expect(actualResponses[5]).toEqual(mockedResponses[1][0][2]);
+      expect(actualResponses[6]).toEqual(mockedResponses[2][0][0]);
+      expect(actualResponses[7]).toEqual(mockedResponses[2][0][1]);
+      expect(actualResponses[8]).toEqual(mockedResponses[2][0][2]);
+      expect(actualResponses[9]).toEqual(mockedResponses[0][1][0]);
+      expect(actualResponses[10]).toEqual(mockedResponses[0][1][1]);
+      expect(actualResponses[11]).toEqual(mockedResponses[0][1][2]);
+      expect(actualResponses[12]).toEqual(mockedResponses[1][1][0]);
+      expect(actualResponses[13]).toEqual(mockedResponses[1][1][1]);
+      expect(actualResponses[14]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[15]).toEqual(mockedResponses[2][1][0]);
+      expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
+      expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can throw an error with the correct message when an invalid field is specified', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        fields: 'id,dummyField,dummyFieldTwo'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+  
+    try {
+      await model.getStream(req);
+      fail('This should not be reached');
+    } catch (err) {
+      const remoteErr = err as RemoteServerError;
+      expect(mockHubApiRequest).toBeCalledTimes(1);
+      expect(mockHubApiRequest).toBeCalledWith('/fields')
+      expect(mockGetBatchStreams).toBeCalledTimes(0);
+      expect(remoteErr.status).toEqual(400)
+      expect(remoteErr.message).toEqual('The config has the following invalid entries and cannot be saved: dummyField, dummyFieldTwo')
     }
   });
 
