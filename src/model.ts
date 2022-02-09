@@ -22,7 +22,7 @@ export class HubApiModel {
 
     // Only fetch site if site is provided and either group or orgid is undefined
     if (
-      searchRequest.options.site && 
+      searchRequest.options.site &&
       (!searchRequest.filter.group || !searchRequest.filter.orgid)
     ) {
       const siteCatalog = await this.getSiteCatalog(searchRequest, searchRequest.options.site);
@@ -33,6 +33,10 @@ export class HubApiModel {
         searchRequest.filter.orgid = siteCatalog.orgId;
       }
     }
+
+    // Validate the scope to ensure that a group, org, and/or id are present to avoid
+    // scraping entire database
+    this.validateRequestScope(searchRequest);
 
     const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest);
 
@@ -75,6 +79,20 @@ export class HubApiModel {
 
     if (!_.has(searchRequest, 'options.portal')) {
       _.set(searchRequest, 'options.portal', 'https://www.arcgis.com');
+    }
+  }
+
+  private validateRequestScope(searchRequest: IContentSearchRequest): void {
+    if (
+      !searchRequest.filter.id &&
+      !searchRequest.filter.group &&
+      !searchRequest.filter.orgid
+    ) {
+      throw new RemoteServerError(
+        'The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information',
+        getHubApiUrl(searchRequest.options.portal),
+        400
+      );
     }
   }
 
