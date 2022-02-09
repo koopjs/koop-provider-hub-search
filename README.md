@@ -24,13 +24,13 @@ req.res.locals.searchRequest = {
 ```
 
 #### Notes
-A search request *must* be scoped to include at least one of the following:
+A search request **must** be scoped to include at least one of the following:
 - an "id" (`filter: { id: '<id here>' }`)
 - at least one "group" (`filter: { group: ['<group id here>'] }`)
 - an "orgid" (`filter: { orgid: '<or id here>' }`)
 - a "site" (`options: { site: '<site here>' }`)
 
-If none of the above are provided, an error will be returned. *Importantly*, if only a site is provided, it is still possible for an error to be returned if the site does not have an organization or group specified as part of its catalog.
+If none of the above are provided, an error will be returned. **Importantly**, if only a site is provided, it is still possible for an error to be returned if the site does not have an organization or group specified as part of its catalog.
 
 ### Pull the Readable Stream
 Then pass the request object to `this.model.pullStream`.
