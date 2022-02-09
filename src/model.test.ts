@@ -29,12 +29,15 @@ describe('HubApiModel', () => {
 
   it('configures and returns a zipped concatenation of batched paging streams', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+  
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        id
       },
       options: {
         portal: 'https://qaext.arcgis.com'
@@ -127,12 +130,14 @@ describe('HubApiModel', () => {
 
   it('defaults portal URL to https://www.arcgis.com', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        id
       }
     };
     const req = {
@@ -198,7 +203,8 @@ describe('HubApiModel', () => {
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
       expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
         filter: {
-          terms
+          terms,
+          id
         },
         options: {
           portal: 'https://www.arcgis.com'
@@ -230,12 +236,14 @@ describe('HubApiModel', () => {
 
   it('can handle 0 batches', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        id
       }
     };
     const req = {
@@ -269,7 +277,8 @@ describe('HubApiModel', () => {
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
       expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
         filter: {
-          terms
+          terms,
+          id
         },
         options: {
           portal: 'https://www.arcgis.com'
@@ -281,7 +290,7 @@ describe('HubApiModel', () => {
     }
   });
 
-  it('can handle an empty request', async () => {
+  it('throws error with an empty request', async () => {
     // Setup
     const model = new HubApiModel();
 
@@ -295,10 +304,6 @@ describe('HubApiModel', () => {
     } as unknown as Request;
 
     // Mock
-    const batches = 0;
-    const pagesPerBatch = 0;
-    const resultsPerPage = 0;
-
     mockGetBatchStreams.mockImplementationOnce(() => {
       return Promise.resolve([]);
     });
@@ -314,27 +319,23 @@ describe('HubApiModel', () => {
 
       await pipe(stream, pass);
 
-      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
-        filter: {},
-        options: {
-          portal: 'https://www.arcgis.com'
-        }
-      });
-      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+      fail('should not reach here!');
     } catch (err) {
-      fail(err);
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
     }
   });
 
   it('can validate and handle specified fields', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        id
       },
       options: {
         portal: 'https://qaext.arcgis.com',
@@ -431,12 +432,14 @@ describe('HubApiModel', () => {
 
   it('can throw an error with the correct message when an invalid field is specified', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        id
       },
       options: {
         fields: 'id,dummyField,dummyFieldTwo'
@@ -755,12 +758,14 @@ describe('HubApiModel', () => {
 
   it('can handle when fetchSite returns null', async () => {
     // Setup
-    const terms = faker.random.words()
+    const terms = faker.random.words();
+    const orgid = faker.datatype.uuid();
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {
       filter: {
-        terms
+        terms,
+        orgid
       },
       options: {
         fields: 'id',
@@ -805,6 +810,7 @@ describe('HubApiModel', () => {
     expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
       filter: {
         terms,
+        orgid
       },
       options: {
         fields: 'id',
@@ -815,7 +821,7 @@ describe('HubApiModel', () => {
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
-  it('stops streaming and throws error if underlying paging stream throws error', async () => {
+  it('throws an error when fetchSite returns null and neither id nor group nor orgid are provided', async () => {
     // Setup
     const terms = faker.random.words()
     const model = new HubApiModel();
@@ -823,6 +829,60 @@ describe('HubApiModel', () => {
     const searchRequest: IContentSearchRequest = {
       filter: {
         terms
+      },
+      options: {
+        fields: 'id',
+        site: 'opendata.de.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockFetchSite.mockImplementation(() => Promise.resolve(null));
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      fail('should not reach here!')
+    } catch (err) {
+      expect(mockFetchSite).toHaveBeenCalledTimes(1);
+      expect(mockFetchSite).toHaveBeenCalledWith('opendata.de.com', {
+        authentication: undefined,
+        isPortal: undefined,
+        hubApiUrl: 'https://hub.arcgis.com',
+        portal: 'https://www.arcgis.com/sharing/rest'
+      })
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+
+  it('stops streaming and throws error if underlying paging stream throws error', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
       },
       options: {
         portal: 'https://qaext.arcgis.com'
