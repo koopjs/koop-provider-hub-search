@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 2.0.0
+Added
+- Added validation that requires a request scope [#9](https://github.com/koopjs/koop-provider-hub-search/pull/9)
+
+Fixed
+- Site property should be examined by provider [#8](https://github.com/koopjs/koop-provider-hub-search/pull/8)
+
 ## 1.0.4
 Patch
 - Return a 400 error response explicitly if a client-provided field is invalid [#7](https://github.com/koopjs/koop-provider-hub-search/pull/7)
