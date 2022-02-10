@@ -5,6 +5,7 @@ Added
 - Added validation that requires a request scope [#9](https://github.com/koopjs/koop-provider-hub-search/pull/9)
 
 Fixed
+- Fixed validation [#10](https://github.com/koopjs/koop-provider-hub-search/pull/10)
 - Site property should be examined by provider [#8](https://github.com/koopjs/koop-provider-hub-search/pull/8)
 
 ## 1.0.4
