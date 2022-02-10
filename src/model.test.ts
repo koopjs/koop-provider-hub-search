@@ -2,7 +2,7 @@ import * as faker from 'faker';
 import { Request } from 'express';
 import { HubApiModel } from '../src/model';
 import { PagingStream } from "../src/paging-stream";
-import { IContentSearchRequest } from "@esri/hub-search";
+import { IBooleanOperator, IContentSearchRequest } from "@esri/hub-search";
 import { PassThrough, pipeline } from 'stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
 import { promisify } from 'util';
@@ -290,11 +290,552 @@ describe('HubApiModel', () => {
     }
   });
 
+  it('can handle a request with a valid group', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const group = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        group
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          group
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can handle a request with a valid group array', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const group = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        group: [group]
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          group: [group]
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can handle a request with a valid group IContentFilter', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const group = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        group: { bool: IBooleanOperator.AND, value: [group] }
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          group: { bool: IBooleanOperator.AND, value: [group] }
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can handle a request with a valid orgid', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const orgid = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        orgid
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          orgid
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can handle a request with a valid orgid array', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const orgid = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        orgid: [orgid]
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          orgid: [orgid]
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('can handle a request with a valid orgid IContentFilter', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const orgid = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        orgid: { bool: IBooleanOperator.AND, value: [orgid] }
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        filter: {
+          terms,
+          orgid: { bool: IBooleanOperator.AND, value: [orgid] }
+        },
+        options: {
+          portal: 'https://www.arcgis.com'
+        }
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
   it('throws error with an empty request', async () => {
     // Setup
     const model = new HubApiModel();
 
     const searchRequest: IContentSearchRequest = {};
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws error with an null group and orgid', async () => {
+    // Setup
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        group: null,
+        orgid: null
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws error with an empty-string group and orgid', async () => {
+    // Setup
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        group: '',
+        orgid: ''
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws error with an empty group and orgid', async () => {
+    // Setup
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        group: [],
+        orgid: []
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws error with an invalid group and orgid typed as IContentFilters', async () => {
+    // Setup
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        group: { bool: IBooleanOperator.AND, value: null },
+        orgid: { bool: IBooleanOperator.AND, value: null },
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws error with an empty group and orgid typed as IContentFilters', async () => {
+    // Setup
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        group: { bool: IBooleanOperator.AND, value: [] },
+        orgid: { bool: IBooleanOperator.AND, value: [] },
+      }
+    };
     const req = {
       res: {
         locals: {
@@ -872,6 +1413,241 @@ describe('HubApiModel', () => {
     }
   });
 
+  it('throws an error when fetchSite returns a catalog of nulls and neither id nor group nor orgid are provided', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        fields: 'id',
+        site: 'opendata.de.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockFetchSite.mockImplementation(() => Promise.resolve({
+      data: {
+        catalog: {
+          groups: null,
+          orgId: null
+        }
+      },
+      item: {} as any
+    }));
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      fail('should not reach here!')
+    } catch (err) {
+      expect(mockFetchSite).toHaveBeenCalledTimes(1);
+      expect(mockFetchSite).toHaveBeenCalledWith('opendata.de.com', {
+        authentication: undefined,
+        isPortal: undefined,
+        hubApiUrl: 'https://hub.arcgis.com',
+        portal: 'https://www.arcgis.com/sharing/rest'
+      })
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws an error when fetchSite returns a catalog of empty arrays and neither id nor group nor orgid are provided', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        fields: 'id',
+        site: 'opendata.de.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockFetchSite.mockImplementation(() => Promise.resolve({
+      data: {
+        catalog: {
+          groups: [],
+          orgId: []
+        }
+      },
+      item: {} as any
+    }));
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      fail('should not reach here!')
+    } catch (err) {
+      expect(mockFetchSite).toHaveBeenCalledTimes(1);
+      expect(mockFetchSite).toHaveBeenCalledWith('opendata.de.com', {
+        authentication: undefined,
+        isPortal: undefined,
+        hubApiUrl: 'https://hub.arcgis.com',
+        portal: 'https://www.arcgis.com/sharing/rest'
+      })
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws an error when fetchSite returns a catalog of invalid IContentFilters and neither id nor group nor orgid are provided', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        fields: 'id',
+        site: 'opendata.de.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockFetchSite.mockImplementation(() => Promise.resolve({
+      data: {
+        catalog: {
+          groups: { bool: 'all', value: null },
+          orgId: { bool: 'all', value: null },
+        }
+      },
+      item: {} as any
+    }));
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      fail('should not reach here!')
+    } catch (err) {
+      expect(mockFetchSite).toHaveBeenCalledTimes(1);
+      expect(mockFetchSite).toHaveBeenCalledWith('opendata.de.com', {
+        authentication: undefined,
+        isPortal: undefined,
+        hubApiUrl: 'https://hub.arcgis.com',
+        portal: 'https://www.arcgis.com/sharing/rest'
+      })
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
+
+  it('throws an error when fetchSite returns a catalog of empty IContentFilters and neither id nor group nor orgid are provided', async () => {
+    // Setup
+    const terms = faker.random.words()
+    const model = new HubApiModel();
+
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms
+      },
+      options: {
+        fields: 'id',
+        site: 'opendata.de.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      }
+    } as unknown as Request;
+
+    // Mock
+    mockFetchSite.mockImplementation(() => Promise.resolve({
+      data: {
+        catalog: {
+          groups: { bool: 'all', value: [] },
+          orgId: { bool: 'all', value: [] },
+        }
+      },
+      item: {} as any
+    }));
+    mockHubApiRequest.mockImplementation(() => Promise.resolve(['id']));
+    mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      fail('should not reach here!')
+    } catch (err) {
+      expect(mockFetchSite).toHaveBeenCalledTimes(1);
+      expect(mockFetchSite).toHaveBeenCalledWith('opendata.de.com', {
+        authentication: undefined,
+        isPortal: undefined,
+        hubApiUrl: 'https://hub.arcgis.com',
+        portal: 'https://www.arcgis.com/sharing/rest'
+      })
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information')
+    }
+  });
 
   it('stops streaming and throws error if underlying paging stream throws error', async () => {
     // Setup
