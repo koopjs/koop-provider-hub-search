@@ -3,7 +3,7 @@ require('isomorphic-form-data');
 
 import * as _ from 'lodash';
 import { Request } from 'express';
-import { IContentSearchRequest } from '@esri/hub-search';
+import { IContentFieldFilter, IContentSearchRequest } from '@esri/hub-search';
 import { PassThrough } from 'stream';
 import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
@@ -23,13 +23,16 @@ export class HubApiModel {
     // Only fetch site if site is provided and either group or orgid is undefined
     if (
       searchRequest.options.site &&
-      (!searchRequest.filter.group || !searchRequest.filter.orgid)
+      (
+        !this.scopedFieldValueIsValid(searchRequest.filter.group) || 
+        !this.scopedFieldValueIsValid(searchRequest.filter.orgid)
+      )
     ) {
       const siteCatalog = await this.getSiteCatalog(searchRequest, searchRequest.options.site);
-      if (!searchRequest.filter.group) {
+      if (!this.scopedFieldValueIsValid(searchRequest.filter.group)) {
         searchRequest.filter.group = siteCatalog.groups;
       }
-      if (!searchRequest.filter.orgid) {
+      if (!this.scopedFieldValueIsValid(searchRequest.filter.orgid)) {
         searchRequest.filter.orgid = siteCatalog.orgId;
       }
     }
@@ -85,8 +88,8 @@ export class HubApiModel {
   private validateRequestScope(searchRequest: IContentSearchRequest): void {
     if (
       !searchRequest.filter.id &&
-      !searchRequest.filter.group &&
-      !searchRequest.filter.orgid
+      !this.scopedFieldValueIsValid(searchRequest.filter.group) &&
+      !this.scopedFieldValueIsValid(searchRequest.filter.orgid)
     ) {
       throw new RemoteServerError(
         'The request must have at least one of the following filters: "id", "group", "orgid". If you provided a "site" option, ensure the site catalog has group and/or org information',
@@ -125,5 +128,17 @@ export class HubApiModel {
     const siteModel = await fetchSite(site, requestOptions);
 
     return _.get(siteModel, 'data.catalog', {});
+  }
+
+  private scopedFieldValueIsValid(val: string | string[] | IContentFieldFilter): boolean {
+    if (!val) {
+      return false;
+    } else if (typeof val === 'string') {
+      return !!val;
+    } else if (Array.isArray(val)) {
+      return !!val.length;
+    } else {
+      return Array.isArray(val.value) && !!val.value.length;
+    }
   }
 }
