@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## 2.0.0
+## 2.0.1
 Added
 - Added validation that requires a request scope [#9](https://github.com/koopjs/koop-provider-hub-search/pull/9)
 
