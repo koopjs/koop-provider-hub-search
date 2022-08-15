@@ -41,31 +41,32 @@ export class HubApiModel {
     // scraping entire database
     this.validateRequestScope(searchRequest);
 
-    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest);
+    const limit = Number(request.query?.limit) || undefined;
+    
+    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
 
-    let pass = new PassThrough({ objectMode: true });
-    let waiting = pagingStreams.length;
+    return this.combineStreams(pagingStreams);
+  }
 
-    if (!waiting) {
-      pass.end(() => {});
-      return pass;
+  private combineStreams(streams) {
+    const stream = new PassThrough({ objectMode: true });
+    if (streams.length > 0) {
+      this._combineStreams(streams, stream).catch((err) => stream.destroy(err));
+    } else {
+      stream.end(() => {});
     }
-
-    for (const stream of pagingStreams) {
-        stream.on('error', err => {
-          console.error(err);
-          pass.emit('error', err);
-        });
-        pass = stream.pipe(pass, { end: false });
-        stream.once('end', () => {
-          --waiting;
-          if (waiting === 0) {
-            pass.end(() => {});
-          }
-        });
+    return stream;
+  }
+  
+  private async _combineStreams(sources, destination) {
+    for (const stream of sources) {
+      await new Promise((resolve, reject) => {
+        stream.pipe(destination, { end: false });
+        stream.on('end', resolve);
+        stream.on('error', reject);
+      });
     }
-
-    return pass;
+    destination.emit('end');
   }
 
   // TODO remove when koop-core no longer requires

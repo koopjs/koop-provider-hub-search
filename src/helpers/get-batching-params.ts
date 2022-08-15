@@ -5,11 +5,10 @@ import { fetchTotalResults } from "./fetch-total-results";
 // For now, DO NOT make configurable.
 const MAX_NUM_BATCHES = 5;
 
-export const getBatchingParams = async (request: IContentSearchRequest): Promise<
+export const getBatchingParams = async (request: IContentSearchRequest, limit?: number | undefined): Promise<
   { pageSize: number, pagesPerBatch: number, numBatches: number }
 > => {
-  const total: number = await fetchTotalResults(request);
-
+  const total: number = limit || await fetchTotalResults(request);
   if (!total || !Number.isInteger(total)) {
     return { pageSize: 0, pagesPerBatch: 0, numBatches: 0 };
   }
@@ -44,6 +43,6 @@ const getNumberOfBatches = (total: number, pageSize: number): number => {
 };
 
 const getPagesPerBatch = (numResults, numBatches, pageSize): number => {
-  const resultsPerBatch = Math.trunc(numResults / numBatches) + 1;
-  return Math.trunc(resultsPerBatch / pageSize) + 1;
+  const resultsPerBatch = Math.ceil(numResults / numBatches);
+  return Math.ceil(resultsPerBatch / pageSize);
 };
