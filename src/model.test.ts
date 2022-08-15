@@ -103,26 +103,121 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
       expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
-      expect(actualResponses[3]).toEqual(mockedResponses[1][0][0]);
-      expect(actualResponses[4]).toEqual(mockedResponses[1][0][1]);
-      expect(actualResponses[5]).toEqual(mockedResponses[1][0][2]);
-      expect(actualResponses[6]).toEqual(mockedResponses[2][0][0]);
-      expect(actualResponses[7]).toEqual(mockedResponses[2][0][1]);
-      expect(actualResponses[8]).toEqual(mockedResponses[2][0][2]);
-      expect(actualResponses[9]).toEqual(mockedResponses[0][1][0]);
-      expect(actualResponses[10]).toEqual(mockedResponses[0][1][1]);
-      expect(actualResponses[11]).toEqual(mockedResponses[0][1][2]);
-      expect(actualResponses[12]).toEqual(mockedResponses[1][1][0]);
-      expect(actualResponses[13]).toEqual(mockedResponses[1][1][1]);
-      expect(actualResponses[14]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[0][1][0]);
+      expect(actualResponses[4]).toEqual(mockedResponses[0][1][1]);
+      expect(actualResponses[5]).toEqual(mockedResponses[0][1][2]);
+      expect(actualResponses[6]).toEqual(mockedResponses[1][0][0]);
+      expect(actualResponses[7]).toEqual(mockedResponses[1][0][1]);
+      expect(actualResponses[8]).toEqual(mockedResponses[1][0][2]);
+      expect(actualResponses[9]).toEqual(mockedResponses[1][1][0]);
+      expect(actualResponses[10]).toEqual(mockedResponses[1][1][1]);
+      expect(actualResponses[11]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[12]).toEqual(mockedResponses[2][0][0]);
+      expect(actualResponses[13]).toEqual(mockedResponses[2][0][1]);
+      expect(actualResponses[14]).toEqual(mockedResponses[2][0][2]);
       expect(actualResponses[15]).toEqual(mockedResponses[2][1][0]);
       expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
       expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+
+  it('returns batched streams based on the limit query', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+  
+    const model = new HubApiModel();
+    const limit: number = 8;
+    const searchRequest: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
+      },
+      options: {
+        portal: 'https://qaext.arcgis.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequest
+        }
+      },
+      query: {
+        limit
+      }
+    } as unknown as Request;
+
+    // Mock
+    const batches = 1;
+    const pagesPerBatch = 1;
+    const resultsPerPage = 8
+
+    const mockedResponses = new Array(batches).fill(null).map(() => {
+      return new Array(pagesPerBatch).fill(null).map(() => {
+        return new Array(resultsPerPage).fill(null).map(() => ({
+          id: faker.datatype.uuid()
+        }));
+      });
+    });
+
+    const mockedPagingStreams = mockedResponses.map((batchPages: any[]) => {
+      let currPage = 0;
+      return new PagingStream({
+        firstPageParams: {},
+        getNextPageParams: () => {
+          if (currPage >= batchPages.length) {
+            return null
+          } else {
+            return () => batchPages[currPage++];
+          }
+        },
+        loadPage: async (params) => {
+          if (typeof params === 'function') {
+            return params()
+          } else {
+            return batchPages[currPage++]
+          }
+        },
+        streamPage: (response, push) => {
+          response.forEach(result => push(result));
+        }
+      })
+    });
+
+    mockGetBatchStreams.mockResolvedValueOnce(mockedPagingStreams);
+
+    // Test and Assert
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, limit);
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+      expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
+      expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
+      expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[0][0][3]);
+      expect(actualResponses[4]).toEqual(mockedResponses[0][0][4]);
+      expect(actualResponses[5]).toEqual(mockedResponses[0][0][5]);
+      expect(actualResponses[6]).toEqual(mockedResponses[0][0][6]);
+      expect(actualResponses[7]).toEqual(mockedResponses[0][0][7]);
     } catch (err) {
       fail(err);
     }
@@ -209,23 +304,24 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
+
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
       expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
-      expect(actualResponses[3]).toEqual(mockedResponses[1][0][0]);
-      expect(actualResponses[4]).toEqual(mockedResponses[1][0][1]);
-      expect(actualResponses[5]).toEqual(mockedResponses[1][0][2]);
-      expect(actualResponses[6]).toEqual(mockedResponses[2][0][0]);
-      expect(actualResponses[7]).toEqual(mockedResponses[2][0][1]);
-      expect(actualResponses[8]).toEqual(mockedResponses[2][0][2]);
-      expect(actualResponses[9]).toEqual(mockedResponses[0][1][0]);
-      expect(actualResponses[10]).toEqual(mockedResponses[0][1][1]);
-      expect(actualResponses[11]).toEqual(mockedResponses[0][1][2]);
-      expect(actualResponses[12]).toEqual(mockedResponses[1][1][0]);
-      expect(actualResponses[13]).toEqual(mockedResponses[1][1][1]);
-      expect(actualResponses[14]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[0][1][0]);
+      expect(actualResponses[4]).toEqual(mockedResponses[0][1][1]);
+      expect(actualResponses[5]).toEqual(mockedResponses[0][1][2]);
+      expect(actualResponses[6]).toEqual(mockedResponses[1][0][0]);
+      expect(actualResponses[7]).toEqual(mockedResponses[1][0][1]);
+      expect(actualResponses[8]).toEqual(mockedResponses[1][0][2]);
+      expect(actualResponses[9]).toEqual(mockedResponses[1][1][0]);
+      expect(actualResponses[10]).toEqual(mockedResponses[1][1][1]);
+      expect(actualResponses[11]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[12]).toEqual(mockedResponses[2][0][0]);
+      expect(actualResponses[13]).toEqual(mockedResponses[2][0][1]);
+      expect(actualResponses[14]).toEqual(mockedResponses[2][0][2]);
       expect(actualResponses[15]).toEqual(mockedResponses[2][1][0]);
       expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
       expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
@@ -270,10 +366,10 @@ describe('HubApiModel', () => {
       pass.on('data', data => {
         actualResponses.push(data);
       });
+
       const pipe = promisify(pipeline);
 
       await pipe(stream, pass);
-
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
       expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
         filter: {
@@ -283,12 +379,13 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
     }
   });
+  
 
   it('can handle a request with a valid group', async () => {
     // Setup
@@ -339,7 +436,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -395,7 +492,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -451,7 +548,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -507,7 +604,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -563,7 +660,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -619,7 +716,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      });
+      }, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -944,25 +1041,25 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
       expect(mockHubApiRequest).toHaveBeenCalledTimes(1);
       expect(mockHubApiRequest).toHaveBeenCalledWith('/fields');
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
       expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
-      expect(actualResponses[3]).toEqual(mockedResponses[1][0][0]);
-      expect(actualResponses[4]).toEqual(mockedResponses[1][0][1]);
-      expect(actualResponses[5]).toEqual(mockedResponses[1][0][2]);
-      expect(actualResponses[6]).toEqual(mockedResponses[2][0][0]);
-      expect(actualResponses[7]).toEqual(mockedResponses[2][0][1]);
-      expect(actualResponses[8]).toEqual(mockedResponses[2][0][2]);
-      expect(actualResponses[9]).toEqual(mockedResponses[0][1][0]);
-      expect(actualResponses[10]).toEqual(mockedResponses[0][1][1]);
-      expect(actualResponses[11]).toEqual(mockedResponses[0][1][2]);
-      expect(actualResponses[12]).toEqual(mockedResponses[1][1][0]);
-      expect(actualResponses[13]).toEqual(mockedResponses[1][1][1]);
-      expect(actualResponses[14]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[0][1][0]);
+      expect(actualResponses[4]).toEqual(mockedResponses[0][1][1]);
+      expect(actualResponses[5]).toEqual(mockedResponses[0][1][2]);
+      expect(actualResponses[6]).toEqual(mockedResponses[1][0][0]);
+      expect(actualResponses[7]).toEqual(mockedResponses[1][0][1]);
+      expect(actualResponses[8]).toEqual(mockedResponses[1][0][2]);
+      expect(actualResponses[9]).toEqual(mockedResponses[1][1][0]);
+      expect(actualResponses[10]).toEqual(mockedResponses[1][1][1]);
+      expect(actualResponses[11]).toEqual(mockedResponses[1][1][2]);
+      expect(actualResponses[12]).toEqual(mockedResponses[2][0][0]);
+      expect(actualResponses[13]).toEqual(mockedResponses[2][0][1]);
+      expect(actualResponses[14]).toEqual(mockedResponses[2][0][2]);
       expect(actualResponses[15]).toEqual(mockedResponses[2][1][0]);
       expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
       expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
@@ -1079,7 +1176,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    });
+    }, undefined);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1152,7 +1249,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    });
+    }, undefined);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1225,9 +1322,10 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    });
+    }, undefined);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
+
 
   it('does not fetch the provided site\'s catalog if group and orgid are explicitly provided', async () => {
     // Setup
@@ -1293,7 +1391,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    });
+    }, undefined);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1358,7 +1456,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    });
+    }, undefined);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1531,6 +1629,7 @@ describe('HubApiModel', () => {
     }
   });
 
+
   it('throws an error when fetchSite returns a catalog of invalid IContentFilters and neither id nor group nor orgid are provided', async () => {
     // Setup
     const terms = faker.random.words()
@@ -1697,7 +1796,7 @@ describe('HubApiModel', () => {
           }
         },
         loadPage: async (params) => {
-          if (index === 0 && currPage === 0) {
+          if (index === 1 && currPage === 0) {
             throw new Error('Error fetching data!')
           } else if (typeof params === 'function') {
             return params()
@@ -1722,6 +1821,7 @@ describe('HubApiModel', () => {
       pass.on('data', data => {
         actualResponses.push(data);
       });
+      
       const pipe = promisify(pipeline);
 
       await pipe(stream, pass);
@@ -1729,16 +1829,16 @@ describe('HubApiModel', () => {
     } catch (err) {
       expect(err.message).toEqual('Error fetching data!');
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
 
-      // Each of the other two streams will be able to return their first pages of data
+      // Expect responses to be returned sequentially until to the error
       expect(actualResponses).toHaveLength(6);
-      expect(actualResponses[0]).toEqual(mockedResponses[1][0][0]);
-      expect(actualResponses[1]).toEqual(mockedResponses[1][0][1]);
-      expect(actualResponses[2]).toEqual(mockedResponses[1][0][2]);
-      expect(actualResponses[3]).toEqual(mockedResponses[2][0][0]);
-      expect(actualResponses[4]).toEqual(mockedResponses[2][0][1]);
-      expect(actualResponses[5]).toEqual(mockedResponses[2][0][2]);
+      expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
+      expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
+      expect(actualResponses[2]).toEqual(mockedResponses[0][0][2]);
+      expect(actualResponses[3]).toEqual(mockedResponses[0][1][0]);
+      expect(actualResponses[4]).toEqual(mockedResponses[0][1][1]);
+      expect(actualResponses[5]).toEqual(mockedResponses[0][1][2]);
     }
   });
 
@@ -1751,4 +1851,5 @@ describe('HubApiModel', () => {
 
     expect(data).toBeUndefined();
   });
+
 });
