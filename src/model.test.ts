@@ -124,7 +124,6 @@ describe('HubApiModel', () => {
       expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
       expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
     } catch (err) {
-      console.log("malai");
       console.log(err);
       fail(err);
     }
