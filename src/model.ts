@@ -41,24 +41,17 @@ export class HubApiModel {
     // scraping entire database
     this.validateRequestScope(searchRequest);
 
-    const limit = Number(request.query?.limit) || undefined;
-    
-    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
-    const pass: PassThrough =  new PassThrough({ objectMode: true });
-    return searchRequest.options.sortField 
-      ? this.combineStreamsInSequence(pagingStreams, pass)
-      : this.combineStreamsNotInSequence(pagingStreams, pass);
-  }
+    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest);
 
-  private combineStreamsNotInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
-    let waiting = streams.length;
+    let pass = new PassThrough({ objectMode: true });
+    let waiting = pagingStreams.length;
 
     if (!waiting) {
       pass.end(() => {});
       return pass;
     }
 
-    for (const stream of streams) {
+    for (const stream of pagingStreams) {
         stream.on('error', err => {
           console.error(err);
           pass.emit('error', err);
@@ -71,23 +64,8 @@ export class HubApiModel {
           }
         });
     }
-    return pass;
-  }
 
-  private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
-    this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     return pass;
-  }
-  
-  private async _combineStreamsInSequence(sources: PagingStream[], destination: PassThrough): Promise<void> {
-    for (const stream of sources) {
-      await new Promise((resolve, reject) => {
-        stream.pipe(destination, { end: false });
-        stream.on('end', resolve);
-        stream.on('error', reject);
-      });
-    }
-    destination.emit('end');
   }
 
   // TODO remove when koop-core no longer requires

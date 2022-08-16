@@ -30,27 +30,6 @@ describe('getBatchPageKeys function', () => {
     });
   });
 
-  it('returns the correct page key for a last batch if limit exists', () => {
-    // Test
-    const pageKeys = getBatchPageKeys(3, 1, 100, 345);
-    const pageKeysAsObjects = pageKeys.map((pageKey: string) => {
-      return JSON.parse(Buffer.from(pageKey, 'base64').toString('ascii'));
-    });
-
-    // Assert
-    expect(pageKeysAsObjects).toHaveLength(3);
-    expect(pageKeysAsObjects[2]).toEqual({
-      hub: {
-        size: 145,
-        start: 201
-      },
-      ago: {
-        start: 1,
-        size: 0
-      }
-    });
-  });
-
   it('returns the correct page key for a multiple batchws', () => {
     // Test
     const pageKeys = getBatchPageKeys(3, 5, 100);
