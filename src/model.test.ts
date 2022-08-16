@@ -208,7 +208,7 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
