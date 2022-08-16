@@ -121,5 +121,64 @@ describe('getBatchedStreams function', () => {
       fail(err);
     }
   });
+
+
+  it('can properly generate streams based on limit if provided', async () => {
+    // Setup
+    const randTerms = faker.random.words();
+
+    const request: IContentSearchRequest = {
+      filter: { terms: randTerms },
+      options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' },
+    };
+    
+    // Test
+    try {
+      const limit: number = 523;
+      const streams: PagingStream[] = await getBatchedStreams(request, limit);
+
+      // Assert
+      expect(searchContentMock).toHaveBeenCalledTimes(0);
+
+      expect(getPagingStreamSpy).toHaveBeenCalledTimes(4);
+
+      expect(getPagingStreamSpy).toHaveBeenNthCalledWith(1,
+        {
+          filter: { terms: randTerms },
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' }
+        },
+        3
+      );
+
+      expect(getPagingStreamSpy).toHaveBeenNthCalledWith(2,
+        {
+          filter: { terms: randTerms },
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxNTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+        },
+        3
+      );
+
+      expect(getPagingStreamSpy).toHaveBeenNthCalledWith(3,
+        {
+          filter: { terms: randTerms },
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ=='}
+        },
+        3
+      );
+
+      expect(getPagingStreamSpy).toHaveBeenNthCalledWith(4,
+        {
+          filter: { terms: randTerms },
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NzMsInN0YXJ0Ijo0NTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+        },
+        1
+      );
+      
+      expect(streams).toHaveLength(4);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
 });
 
