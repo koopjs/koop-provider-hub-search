@@ -75,11 +75,7 @@ export class HubApiModel {
   }
 
   private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
-    if (streams.length > 0) {
-      this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
-    } else {
-      pass.end(() => {});
-    }
+    this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     return pass;
   }
   
