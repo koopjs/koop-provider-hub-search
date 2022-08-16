@@ -4,10 +4,10 @@ export const getBatchPageKeys = (numBatches: number, pagesPerBatch: number, page
     pageKeys.push({
       hub: {
         // No default paging for the last batch if limit exists
-        size: !isNaN(limit) 
-        ? ((i === (numBatches - 1)) 
-          ? Math.abs((i * pagesPerBatch * pageSize) - limit) : pageSize
-        ) : pageSize,
+        size: isNaN(limit) 
+          ? pageSize 
+          : (i === (numBatches - 1)) 
+          ? Math.abs((i * pagesPerBatch * pageSize) - limit) : pageSize,
         // Start at 1
         start: 1 + (i * pagesPerBatch * pageSize),
       },
