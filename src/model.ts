@@ -48,7 +48,7 @@ export class HubApiModel {
     return this.combineStreams(pagingStreams);
   }
 
-  private combineStreams(streams) {
+  private combineStreams(streams: PagingStream[]): PassThrough {
     const stream = new PassThrough({ objectMode: true });
     if (streams.length > 0) {
       this._combineStreams(streams, stream).catch((err) => stream.destroy(err));
@@ -58,7 +58,7 @@ export class HubApiModel {
     return stream;
   }
   
-  private async _combineStreams(sources, destination) {
+  private async _combineStreams(sources: PagingStream[], destination: PassThrough): Promise<void> {
     for (const stream of sources) {
       await new Promise((resolve, reject) => {
         stream.pipe(destination, { end: false });
