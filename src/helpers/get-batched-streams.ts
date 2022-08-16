@@ -5,10 +5,10 @@ import { getBatchingParams } from './get-batching-params';
 import { PagingStream } from '../paging-stream';
 import { getPagingStream } from './get-paging-stream';
 
-export const getBatchedStreams = async (request: IContentSearchRequest, limit?: number | undefined): Promise<PagingStream[]> => {    
+export const getBatchedStreams = async (request: IContentSearchRequest, limit: number | undefined = undefined): Promise<PagingStream[]> => {    
   const { numBatches, pagesPerBatch, pageSize } = await getBatchingParams(request, limit);
   const pageKeys: string[] = await getBatchPageKeys( 
-    isNaN(limit) ? numBatches : Math.ceil(limit / (pagesPerBatch * pageSize)), 
+    numBatches, 
     pagesPerBatch, 
     pageSize, 
     limit
