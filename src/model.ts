@@ -45,7 +45,7 @@ export class HubApiModel {
     
     const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
     const pass: PassThrough =  new PassThrough({ objectMode: true });
-    return searchRequest.options.sortOrder && searchRequest.options.sortField 
+    return searchRequest.options.sortField 
       ? this.combineStreamsInSequence(pagingStreams, pass)
       : this.combineStreamsNotInSequence(pagingStreams, pass);
   }
