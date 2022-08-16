@@ -44,15 +44,13 @@ export class HubApiModel {
     const limit = Number(request.query?.limit) || undefined;
     
     const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
-    
+    const pass: PassThrough =  new PassThrough({ objectMode: true });
     return searchRequest.options.sortOrder && searchRequest.options.sortField 
-      ? this.combineStreamsInSequence(pagingStreams)
-      : this.combineStreamsNotInSequence(pagingStreams);
+      ? this.combineStreamsInSequence(pagingStreams, pass)
+      : this.combineStreamsNotInSequence(pagingStreams, pass);
   }
 
-  private combineStreamsNotInSequence(streams: PagingStream[]): PassThrough {
-
-    let pass = new PassThrough({ objectMode: true });
+  private combineStreamsNotInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
     let waiting = streams.length;
 
     if (!waiting) {
@@ -76,14 +74,13 @@ export class HubApiModel {
     return pass;
   }
 
-  private combineStreamsInSequence(streams: PagingStream[]): PassThrough {
-    const stream = new PassThrough({ objectMode: true });
+  private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
     if (streams.length > 0) {
-      this._combineStreamsInSequence(streams, stream).catch((err) => stream.destroy(err));
+      this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     } else {
-      stream.end(() => {});
+      pass.end(() => {});
     }
-    return stream;
+    return pass;
   }
   
   private async _combineStreamsInSequence(sources: PagingStream[], destination: PassThrough): Promise<void> {
