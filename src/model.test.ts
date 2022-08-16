@@ -209,7 +209,7 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
@@ -230,7 +230,6 @@ describe('HubApiModel', () => {
       expect(actualResponses[16]).toEqual(mockedResponses[2][1][1]);
       expect(actualResponses[17]).toEqual(mockedResponses[2][1][2]);
     } catch (err) {
-      console.log("malai");
       console.log(err);
       fail(err);
     }
