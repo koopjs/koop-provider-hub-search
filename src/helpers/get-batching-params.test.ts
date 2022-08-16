@@ -30,6 +30,24 @@ describe('getBatchedParams function', () => {
     expect(pageSize).toEqual(100);
   });
 
+  it('returns the correct params based on limit if available instead of total search count', async () => {
+    // Setup
+    const request: IContentSearchRequest = {};
+
+    const limit: number = 825;
+    // Test
+    const {
+      numBatches,
+      pagesPerBatch,
+      pageSize
+    } = await getBatchingParams(request, limit);
+    expect(fetchTotalResultsMock).toHaveBeenCalledTimes(0);
+    expect(numBatches).toEqual(5);
+    expect(pagesPerBatch).toEqual(2);
+    expect(pageSize).toEqual(100);
+  });
+
+
   it('returns correct params when there are no results', async () => {
     // Setup
     const request: IContentSearchRequest = {
@@ -89,7 +107,7 @@ describe('getBatchedParams function', () => {
     } = await getBatchingParams(request);
 
     expect(numBatches).toEqual(5);
-    expect(pagesPerBatch).toEqual(5);
+    expect(pagesPerBatch).toEqual(4);
     expect(pageSize).toEqual(5);
   });
 
