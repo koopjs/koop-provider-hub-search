@@ -14,8 +14,11 @@ export const getBatchingParams = async (request: IContentSearchRequest, limit?: 
   }
 
   const pageSize: number = getPageSize(_.get(request, 'options.page'));
-  const numBatches = getNumberOfBatches(total, pageSize);
+  let numBatches = getNumberOfBatches(total, pageSize);
   const pagesPerBatch: number = getPagesPerBatch(total, numBatches, pageSize);
+  // revise total calcualted number of batches if limit exists
+  // essential to customize last batch paging
+  numBatches = isNaN(limit) ? numBatches : Math.ceil(limit / (pagesPerBatch * pageSize));
   return { pageSize, pagesPerBatch, numBatches };
 };
 
