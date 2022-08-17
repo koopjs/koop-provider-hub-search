@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.1.0
+Added
+- Added capability to sort results [#11](https://github.com/koopjs/koop-provider-hub-search/pull/11) and [#12](https://github.com/koopjs/koop-provider-hub-search/pull/12)
+
 ## 2.0.1
 Added
 - Added validation that requires a request scope [#9](https://github.com/koopjs/koop-provider-hub-search/pull/9)
