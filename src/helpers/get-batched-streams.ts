@@ -19,6 +19,15 @@ export const getBatchedStreams = async (request: IContentSearchRequest, limit?: 
     return clone;
   });
   return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
-    return getPagingStream(batchRequest, limit ? (i + 1 === requests.length ? 1 : pagesPerBatch) : pagesPerBatch);
+    return getPagingStream(batchRequest, getPagesPerBatch(limit, i, requests, pagesPerBatch));
   });
+};
+
+/*  
+  If limit is provided, pagesPerBatch is set to 1 and disregard the previously 
+  calculated pagesPerBatch for the last content search request. It is required 
+  to do so as default paging strategy is not implemented for the last batch.
+*/
+const getPagesPerBatch = (limit: number, requestIndex: number, requests: IContentSearchRequest[], pagesPerBatch: number) => {
+  return limit ? (requestIndex + 1 === requests.length ? 1 : pagesPerBatch) : pagesPerBatch;
 };
