@@ -40,10 +40,8 @@ export class HubApiModel {
     // Validate the scope to ensure that a group, org, and/or id are present to avoid
     // scraping entire database
     this.validateRequestScope(searchRequest);
-
-    const limit = Number(request.query?.limit) || undefined;
     
-    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
+    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, Number(request.query?.limit));
     const pass: PassThrough =  new PassThrough({ objectMode: true });
     return searchRequest.options.sortField 
       ? this.combineStreamsInSequence(pagingStreams, pass)

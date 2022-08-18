@@ -103,7 +103,7 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
@@ -208,7 +208,7 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
@@ -410,7 +410,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
 
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
@@ -485,7 +485,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -542,7 +542,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -598,7 +598,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -654,7 +654,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -710,7 +710,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -766,7 +766,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -822,7 +822,7 @@ describe('HubApiModel', () => {
         options: {
           portal: 'https://www.arcgis.com'
         }
-      }, undefined);
+      }, NaN);
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -1147,7 +1147,7 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, NaN);
       expect(mockHubApiRequest).toHaveBeenCalledTimes(1);
       expect(mockHubApiRequest).toHaveBeenCalledWith('/fields');
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -1282,7 +1282,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    }, undefined);
+    }, NaN);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1355,7 +1355,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    }, undefined);
+    }, NaN);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1428,7 +1428,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    }, undefined);
+    }, NaN);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1497,7 +1497,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    }, undefined);
+    }, NaN);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1562,7 +1562,7 @@ describe('HubApiModel', () => {
         site: 'opendata.de.com',
         portal: 'https://www.arcgis.com'
       }
-    }, undefined);
+    }, NaN);
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
@@ -1934,7 +1934,7 @@ describe('HubApiModel', () => {
     } catch (err) {
       expect(err.message).toEqual('Error fetching data!');
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, undefined);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, searchRequest, NaN);
 
       // Each of the other two streams will be able to return their first pages of data
       expect(actualResponses).toHaveLength(6);
