@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 2.1.1
+Fixed
+- Fixed limit to respect 0 [#13](https://github.com/koopjs/koop-provider-hub-search/pull/13)
+
 ## 2.1.0
 Added
 - Added capability to sort results [#11](https://github.com/koopjs/koop-provider-hub-search/pull/11) and [#12](https://github.com/koopjs/koop-provider-hub-search/pull/12)
