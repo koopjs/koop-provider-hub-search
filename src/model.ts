@@ -41,7 +41,7 @@ export class HubApiModel {
     // scraping entire database
     this.validateRequestScope(searchRequest);
 
-    const limit = Number(request.query?.limit) || undefined;
+    const limit = Number(request.query?.limit) ?? undefined;
     
     const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, limit);
     const pass: PassThrough =  new PassThrough({ objectMode: true });
