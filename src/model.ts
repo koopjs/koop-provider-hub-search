@@ -7,43 +7,82 @@ import { IContentFieldFilter, IContentSearchRequest } from '@esri/hub-search';
 import { PassThrough } from 'stream';
 import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
-import { fetchSite, getHubApiUrl, getPortalApiUrl, hubApiRequest, RemoteServerError } from '@esri/hub-common';
+import { fetchSite, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
+
+const requiredApiTerms = [
+  'id', // used for the dataset landing page URL
+  'type', // used for the dataset landing page URL
+  'slug', // used for the dataset landing page URL
+  'access', // used for detecting proxied csv's
+  'size', // used for detecting proxied csv's
+  'licenseInfo', // required for license resolution
+  'structuredLicense', // required for license resolution
+];
+
+type HubApiRequest = {
+  hostname: string,
+  res?: {
+    locals: {
+      searchRequestBody?: IContentSearchRequest,
+      siteModel?: IModel,
+      arcgisPortal?: string
+    }
+  }
+  query?: {
+    limit?: number
+  }
+}
 
 export class HubApiModel {
 
-  async getStream (request: Request) {
-    const searchRequest: IContentSearchRequest = request.res.locals.searchRequest;
-    this.preprocessSearchRequest(searchRequest);
+  async getStream(request: Request) {
+    const { hostname, res: { locals: { searchRequestBody, siteModel, arcgisPortal } }, query: { limit } }: HubApiRequest = request;
+    const hubSiteModel = siteModel || await this.fetchSiteModel(hostname, this.getRequestOptions(arcgisPortal));
+    
+    if (!hubSiteModel) {
+      throw Error('Unable to fetch Hub site model');
+    }
 
-    if (searchRequest.options.fields) {
+    this.preprocessSearchRequest(searchRequestBody);
+
+    searchRequestBody.options.fields =
+      `${searchRequestBody.options.fields},${requiredApiTerms.join(',')}`;
+
+    if (searchRequestBody.options.fields) {
       const validFields: string[] = await hubApiRequest('/fields');
-      this.validateFields(searchRequest, validFields);
+      this.validateFields(searchRequestBody, validFields);
     }
 
     // Only fetch site if site is provided and either group or orgid is undefined
     if (
-      searchRequest.options.site &&
+      searchRequestBody.options.site &&
       (
-        !this.scopedFieldValueIsValid(searchRequest.filter.group) || 
-        !this.scopedFieldValueIsValid(searchRequest.filter.orgid)
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.group) ||
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)
       )
     ) {
-      const siteCatalog = await this.getSiteCatalog(searchRequest, searchRequest.options.site);
-      if (!this.scopedFieldValueIsValid(searchRequest.filter.group)) {
-        searchRequest.filter.group = siteCatalog.groups;
+      const siteCatalog = await this.getSiteCatalog(searchRequestBody, searchRequestBody.options.site);
+      if (!this.scopedFieldValueIsValid(searchRequestBody.filter.group)) {
+        searchRequestBody.filter.group = siteCatalog.groups;
       }
-      if (!this.scopedFieldValueIsValid(searchRequest.filter.orgid)) {
-        searchRequest.filter.orgid = siteCatalog.orgId;
+      if (!this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)) {
+        searchRequestBody.filter.orgid = siteCatalog.orgId;
       }
     }
 
     // Validate the scope to ensure that a group, org, and/or id are present to avoid
     // scraping entire database
-    this.validateRequestScope(searchRequest);
-    
-    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, Number(request.query?.limit));
-    const pass: PassThrough =  new PassThrough({ objectMode: true });
-    return searchRequest.options.sortField 
+    this.validateRequestScope(searchRequestBody);
+
+    const pagingStreams: PagingStream[] = await getBatchedStreams(
+      searchRequestBody,
+      hostname,
+      hubSiteModel,
+      limit
+    );
+
+    const pass: PassThrough = new PassThrough({ objectMode: true });
+    return searchRequestBody.options.sortField
       ? this.combineStreamsInSequence(pagingStreams, pass)
       : this.combineStreamsNotInSequence(pagingStreams, pass);
   }
@@ -52,22 +91,22 @@ export class HubApiModel {
     let waiting = streams.length;
 
     if (!waiting) {
-      pass.end(() => {});
+      pass.end(() => { });
       return pass;
     }
 
     for (const stream of streams) {
-        stream.on('error', err => {
-          console.error(err);
-          pass.emit('error', err);
-        });
-        pass = stream.pipe(pass, { end: false });
-        stream.once('end', () => {
-          --waiting;
-          if (waiting === 0) {
-            pass.end(() => {});
-          }
-        });
+      stream.on('error', err => {
+        console.error(err);
+        pass.emit('error', err);
+      });
+      pass = stream.pipe(pass, { end: false });
+      stream.once('end', () => {
+        --waiting;
+        if (waiting === 0) {
+          pass.end(() => { });
+        }
+      });
     }
     return pass;
   }
@@ -76,7 +115,7 @@ export class HubApiModel {
     this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     return pass;
   }
-  
+
   private async _combineStreamsInSequence(sources: PagingStream[], destination: PassThrough): Promise<void> {
     for (const stream of sources) {
       await new Promise((resolve, reject) => {
@@ -89,7 +128,29 @@ export class HubApiModel {
   }
 
   // TODO remove when koop-core no longer requires
-  getData () {}
+  getData() { }
+
+
+  private async fetchSiteModel(hostname, opts) : Promise<IModel> {
+    try {
+      return await fetchSite(hostname, opts);
+    } catch (err) {
+      // Throw 404 if domain does not exist (first) or site is private (second)
+      if (err.message.includes(':: 404') || err.response?.error?.code === 403) {
+        throw new RemoteServerError(err.message, null, 404);
+      }
+      throw new RemoteServerError(err.message, null, 500);
+    }
+  }
+
+  private getRequestOptions(portalUrl) {
+    return {
+      isPortal: false,
+      hubApiUrl: getHubApiUrl(portalUrl),
+      portal: getPortalApiUrl(portalUrl),
+      authentication: null,
+    };
+  }
 
   private preprocessSearchRequest(searchRequest: IContentSearchRequest): void {
     if (!searchRequest.filter) {
