@@ -9,7 +9,7 @@ import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
 import { fetchSite, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
 
-const requiredApiTerms = [
+const REQUIRED_FIELDS = [
   'id', // used for the dataset landing page URL
   'type', // used for the dataset landing page URL
   'slug', // used for the dataset landing page URL
@@ -17,6 +17,19 @@ const requiredApiTerms = [
   'size', // used for detecting proxied csv's
   'licenseInfo', // required for license resolution
   'structuredLicense', // required for license resolution
+];
+
+// additional fields due to dataset enrichment
+const ADDON_FIELDS = [
+  'hubLandingPage',
+  'accessUrlCSV',
+  'isLayer',
+  'accessUrlKML',
+  'accessUrlShapeFile',
+  'accessUrlWFS',
+  'accessUrlWMS',
+  'accessUrlGeoJSON',
+  'license'
 ];
 
 type HubApiRequest = {
@@ -38,7 +51,7 @@ export class HubApiModel {
   async getStream(request: Request) {
     const { hostname, res: { locals: { searchRequestBody, siteModel, arcgisPortal } }, query: { limit } }: HubApiRequest = request;
     const hubSiteModel = siteModel || await this.fetchSiteModel(hostname, this.getRequestOptions(arcgisPortal));
-    
+
     if (!hubSiteModel) {
       throw Error('Unable to fetch Hub site model');
     }
@@ -46,9 +59,10 @@ export class HubApiModel {
     this.preprocessSearchRequest(searchRequestBody);
 
     searchRequestBody.options.fields =
-      `${searchRequestBody.options.fields},${requiredApiTerms.join(',')}`;
+      `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}`;
 
     if (searchRequestBody.options.fields) {
+      searchRequestBody.options.fields = this.getValidHubApiFields(searchRequestBody.options.fields);
       const validFields: string[] = await hubApiRequest('/fields');
       this.validateFields(searchRequestBody, validFields);
     }
@@ -85,6 +99,10 @@ export class HubApiModel {
     return searchRequestBody.options.sortField
       ? this.combineStreamsInSequence(pagingStreams, pass)
       : this.combineStreamsNotInSequence(pagingStreams, pass);
+  }
+
+  private getValidHubApiFields(fields: string): string {
+    return fields.split(',').filter((field) => !ADDON_FIELDS.includes(field)).join(',');
   }
 
   private combineStreamsNotInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
@@ -131,7 +149,7 @@ export class HubApiModel {
   getData() { }
 
 
-  private async fetchSiteModel(hostname, opts) : Promise<IModel> {
+  private async fetchSiteModel(hostname, opts): Promise<IModel> {
     try {
       return await fetchSite(hostname, opts);
     } catch (err) {
@@ -182,7 +200,6 @@ export class HubApiModel {
 
   private validateFields(searchRequest: IContentSearchRequest, validFields: string[]) {
     const invalidFields: string[] = [];
-
     for (const field of searchRequest.options.fields.split(',')) {
       if (!validFields.includes(field)) {
         invalidFields.push(field);
