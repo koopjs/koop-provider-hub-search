@@ -7,7 +7,7 @@ import { IContentFieldFilter, IContentSearchRequest } from '@esri/hub-search';
 import { PassThrough } from 'stream';
 import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
-import { fetchSite, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
+import { fetchSiteModel, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
 
 const REQUIRED_FIELDS = [
   'id', // used for the dataset landing page URL
@@ -33,12 +33,12 @@ const ADDON_FIELDS = [
 ];
 
 type HubApiRequest = {
-  hostname: string,
   res?: {
     locals: {
       searchRequestBody?: IContentSearchRequest,
       siteModel?: IModel,
       arcgisPortal?: string
+      siteIdentifier?: string,
     }
   }
   query?: {
@@ -49,12 +49,8 @@ type HubApiRequest = {
 export class HubApiModel {
 
   async getStream(request: Request) {
-    const { hostname, res: { locals: { searchRequestBody, siteModel, arcgisPortal } }, query: { limit } }: HubApiRequest = request;
-    const hubSiteModel = siteModel || await this.fetchSiteModel(hostname, this.getRequestOptions(arcgisPortal));
-
-    if (!hubSiteModel) {
-      throw Error('Unable to fetch Hub site model');
-    }
+    const { res: { locals: { searchRequestBody, siteModel, arcgisPortal, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
+    const hubSiteModel = siteModel || await this.fetchHubSiteModel(siteIdentifier, this.getRequestOptions(arcgisPortal));
 
     this.preprocessSearchRequest(searchRequestBody);
 
@@ -88,12 +84,12 @@ export class HubApiModel {
     // scraping entire database
     this.validateRequestScope(searchRequestBody);
 
-    const pagingStreams: PagingStream[] = await getBatchedStreams(
-      searchRequestBody,
-      hostname,
-      hubSiteModel,
+    const pagingStreams: PagingStream[] = await getBatchedStreams({
+      request: searchRequestBody,
+      siteUrl: siteIdentifier,
+      siteModel: hubSiteModel,
       limit
-    );
+    });
 
     const pass: PassThrough = new PassThrough({ objectMode: true });
     return searchRequestBody.options.sortField
@@ -149,9 +145,9 @@ export class HubApiModel {
   getData() { }
 
 
-  private async fetchSiteModel(hostname, opts): Promise<IModel> {
+  private async fetchHubSiteModel(hostname, opts): Promise<IModel> {
     try {
-      return await fetchSite(hostname, opts);
+      return await fetchSiteModel(hostname, opts);
     } catch (err) {
       // Throw 404 if domain does not exist (first) or site is private (second)
       if (err.message.includes(':: 404') || err.response?.error?.code === 403) {
@@ -223,7 +219,7 @@ export class HubApiModel {
       portal: getPortalApiUrl(searchRequest.options.portal),
     };
 
-    const siteModel = await fetchSite(site, requestOptions);
+    const siteModel = await fetchSiteModel(site, requestOptions);
 
     return _.get(siteModel, 'data.catalog', {});
   }

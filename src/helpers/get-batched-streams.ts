@@ -6,24 +6,36 @@ import { PagingStream } from '../paging-stream';
 import { getPagingStream } from './get-paging-stream';
 import { IModel } from '@esri/hub-common';
 
-export const getBatchedStreams =
-  async (request: IContentSearchRequest, siteUrl: string, siteModel: IModel, limit?: number | undefined): Promise<PagingStream[]> => {
-    const { numBatches, pagesPerBatch, pageSize } = await getBatchingParams(request, limit);
-    const pageKeys: string[] = await getBatchPageKeys(
-      numBatches,
-      pagesPerBatch,
-      pageSize,
-      limit
-    );
-    const requests: IContentSearchRequest[] = pageKeys.map((key: string) => {
-      const clone = _.cloneDeep(request);
-      _.set(clone, 'options.page', key);
-      return clone;
-    });
-    return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
-      return getPagingStream(batchRequest, siteUrl, siteModel, getPagesPerBatch(limit, i, requests, pagesPerBatch));
-    });
-  };
+type BatchSearchRequest = {
+  request: IContentSearchRequest,
+  siteUrl: string,
+  siteModel: IModel,
+  limit?: number | undefined
+}
+export const getBatchedStreams = async (batchSearchRequest: BatchSearchRequest): Promise<PagingStream[]> => {
+  const {
+    request,
+    siteUrl,
+    siteModel,
+    limit
+  }: BatchSearchRequest = batchSearchRequest;
+
+  const { numBatches, pagesPerBatch, pageSize } = await getBatchingParams(request, limit);
+  const pageKeys: string[] = await getBatchPageKeys(
+    numBatches,
+    pagesPerBatch,
+    pageSize,
+    limit
+  );
+  const requests: IContentSearchRequest[] = pageKeys.map((key: string) => {
+    const clone = _.cloneDeep(request);
+    _.set(clone, 'options.page', key);
+    return clone;
+  });
+  return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
+    return getPagingStream(batchRequest, siteUrl, siteModel, getPagesPerBatch(limit, i, requests, pagesPerBatch));
+  });
+};
 
 /*  
   If limit is provided, pagesPerBatch is set to 1 and disregard the previously 

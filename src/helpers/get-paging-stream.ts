@@ -17,7 +17,7 @@ export const getPagingStream =
         return searchDatasets(params); // first page request
       },
 
-      streamPage: (response, push) => response.data.forEach(result => push(enrichDataset(result.attributes, siteUrl, request.options.portal, siteModel))),
+      streamPage: (response, push) => response.data.forEach(result => push(enrichDataset(result.attributes, { siteUrl, portalUrl: request.options.portal, siteModel }))),
 
       getNextPageParams: response => response.meta?.next,
 
