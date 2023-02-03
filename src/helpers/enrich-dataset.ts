@@ -6,7 +6,7 @@ const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
 
 type HubDataset = Record<string, any>;
-type HubSite = {
+export type HubSite = {
     siteUrl: string,
     portalUrl: string,
     siteModel: IModel
@@ -21,59 +21,49 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
 
     const { siteUrl, portalUrl, siteModel }: HubSite = hubsite;
 
-    const { relative: relativePath } = getContentSiteUrls(content, siteModel);
-    const hubLandingPage = siteUrl.startsWith('https://') ? siteUrl + relativePath : `https://${siteUrl}${relativePath}`;
-    const downloadLink = siteUrl.startsWith('https://') ? `${siteUrl}/datasets/${content.identifier}` : `https://${siteUrl}/datasets/${content.identifier}`;
-
-    // AGO links must be generated from Dataset Records
-    const agoLandingPage = getAgoLandingPageUrl(dataset.id, portalUrl);
-
     const {
-        structuredLicense: { url = null } = {},
-        licenseInfo = ''
+        structuredLicense: { url = null } = {}
     } = dataset;
 
-    // Override hub.js default license value of 'none'
-    const license = 
-        dataset.license === 'none' ? 
-        null : 
-        (!dataset.license || dataset.license.match(/{{.+}}/g)?.length) 
-        ? (url || licenseInfo || '') : 
-        dataset.license;
+    const additionalFields: Record<string, any> = {}; // container object for additional fields
+
+    const { relative: relativePath } = getContentSiteUrls(content, siteModel);
+    additionalFields.hubLandingPage = concatUrlAndPath(siteUrl, relativePath);
+    additionalFields.downloadLink = concatUrlAndPath(siteUrl, content.identifier);
+
+    additionalFields.agoLandingPage = getAgoLandingPageUrl(dataset.id, portalUrl);
+    additionalFields.license = getDatasetLicense(dataset);
 
     if (isPage(dataset as IItem) && !hasTags(dataset)) {
-        dataset.keyword = ['ArcGIS Hub page'];
+        additionalFields.keyword = ['ArcGIS Hub page'];
     }
 
-    const downloadLinkFor: (type: string) => string = getDownloadLinkFn(downloadLink, dataset);
-    dataset.isProxiedCSV = isProxiedCSV(dataset);
-    dataset.isLayer = isLayer(dataset);
+    const downloadLinkFor: (type: string) => string = getDownloadLinkFn(additionalFields.downloadLink, dataset);
+    additionalFields.isProxiedCSV = isProxiedCSV(dataset);
+    additionalFields.isLayer = isLayer(dataset);
     if (isProxiedCSV(dataset)) {
-        dataset.accessUrlCSV = downloadLinkFor('csv');
+        additionalFields.accessUrlCSV = downloadLinkFor('csv');
     }
 
     if (isLayer(dataset)) {
-        dataset.accessUrlGeoJSON = downloadLinkFor('geojson');
+        additionalFields.accessUrlGeoJSON = downloadLinkFor('geojson');
         if (_.has(dataset, 'layer.geometryType')) {
-            dataset.accessUrlKML = downloadLinkFor('kml');
-            dataset.accessUrlShapeFile = downloadLinkFor('zip');
+            additionalFields.accessUrlKML = downloadLinkFor('kml');
+            additionalFields.accessUrlShapeFile = downloadLinkFor('zip');
         }
     }
 
     if (dataset.supportedExtensions?.includes(WFS_SERVER)) {
-        dataset.accessUrlWFS = ogcUrl(url, 'WFS');
+        additionalFields.accessUrlWFS = ogcUrl(url, 'WFS');
     }
 
     if (dataset.supportedExtensions?.includes(WMS_SERVER)) {
-        dataset.accessUrlWMS = ogcUrl(url, 'WMS');
+        additionalFields.accessUrlWMS = ogcUrl(url, 'WMS');
     }
 
     return {
-        hubLandingPage,
-        downloadLink,
-        agoLandingPage,
-        license,
-        ...dataset
+        ...dataset,
+        ...additionalFields
     };
 };
 
@@ -84,6 +74,31 @@ function hasTags(hubDataset: HubDataset) {
 
 function isLayer(hubDataset: HubDataset) {
     return /_/.test(hubDataset.id);
+}
+
+function concatUrlAndPath(siteUrl: string, path: string) {
+    try {
+        return Boolean(new URL(siteUrl)) && `${siteUrl}/${path}`;
+    } catch (e) {
+        return `https://${siteUrl}/${path}`;
+    }
+}
+
+function getDatasetLicense(dataset: HubDataset) {
+    const {
+        structuredLicense: { url = null } = {},
+        licenseInfo = ''
+    } = dataset;
+
+    // Override hub.js default license value of 'none'
+    const license =
+        dataset.license === 'none' ?
+            null :
+            (!dataset.license || dataset.license.match(/{{.+}}/g)?.length)
+                ? (url || licenseInfo || '') :
+                dataset.license;
+
+    return license;
 }
 
 function isProxiedCSV(hubDataset: HubDataset) {

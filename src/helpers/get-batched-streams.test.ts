@@ -1,8 +1,9 @@
 import * as faker from 'faker';
-import { IContentSearchRequest, searchContent } from '@esri/hub-search';
+import { searchContent } from '@esri/hub-search';
 import { PagingStream } from '../paging-stream';
-import { getBatchedStreams } from './get-batched-streams';
+import { getBatchedStreams, BatchSearch } from './get-batched-streams';
 import * as GetPagingStream from './get-paging-stream';
+import { HubSite } from './enrich-dataset';
 
 jest.mock('@esri/hub-search');
 
@@ -14,15 +15,18 @@ describe('getBatchedStreams function', () => {
     searchContentMock.mockReset();
     getPagingStreamSpy.mockReset();
   });
-  
+
   it('can handle not returning any streams', async () => {
     // Setup
     const randTerms = faker.random.words();
-
-    const request: IContentSearchRequest = {
-      filter: { terms: randTerms },
-      options: { page: 'eyJodWIiOnsic2l6ZSI6NSwic3RhcnQiOjF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' },
-    };
+    const batchSearch: BatchSearch = {
+      request: {
+        filter: { terms: randTerms },
+        options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
+      },
+      siteUrl: 'arcgis.com',
+      siteModel: { item: {} as any }
+    }
 
     // Mock
     searchContentMock.mockResolvedValueOnce({
@@ -36,17 +40,17 @@ describe('getBatchedStreams function', () => {
 
     // Test
     try {
-      const streams: PagingStream[] = await getBatchedStreams(request);
+      const streams: PagingStream[] = await getBatchedStreams(batchSearch);
 
       // Assert
       expect(searchContentMock).toHaveBeenCalledTimes(1);
       expect(searchContentMock).toHaveBeenNthCalledWith(1, {
         filter: { terms: randTerms },
-        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=' }
+        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=', portal: 'arcgis.com' }
       });
       expect(getPagingStreamSpy).toHaveBeenCalledTimes(0);
       expect(streams).toHaveLength(0);
-    } catch(err) {
+    } catch (err) {
       fail(err);
     }
   });
@@ -55,10 +59,19 @@ describe('getBatchedStreams function', () => {
     // Setup
     const randTerms = faker.random.words();
 
-    const request: IContentSearchRequest = {
-      filter: { terms: randTerms },
-      options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' },
-    };
+    const batchSearch: BatchSearch = {
+      request: {
+        filter: { terms: randTerms },
+        options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
+      },
+      siteUrl: 'arcgis.com',
+      siteModel: { item: {} as any }
+    }
+    const hubSite: HubSite = {
+      siteUrl: batchSearch.siteUrl,
+      siteModel: batchSearch.siteModel,
+      portalUrl: batchSearch.request.options?.portal  || ''
+    }
 
     // Mock
     searchContentMock.mockResolvedValueOnce({
@@ -69,51 +82,56 @@ describe('getBatchedStreams function', () => {
       results: [],
       query: randTerms
     });
-    
+
     // Test
     try {
-      const streams: PagingStream[] = await getBatchedStreams(request);
+      const streams: PagingStream[] = await getBatchedStreams(batchSearch);
 
       // Assert
       expect(searchContentMock).toHaveBeenCalledTimes(1);
       expect(searchContentMock).toHaveBeenNthCalledWith(1, {
         filter: { terms: randTerms },
-        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=' }
+        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=', portal: 'arcgis.com'  }
       });
       expect(getPagingStreamSpy).toHaveBeenCalledTimes(5);
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(1,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com'  }
         },
+        hubSite,
         2
       );
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(2,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
         },
+        hubSite,
         2
       );
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(3,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoyMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoyMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
         },
+        hubSite,
         2
       );
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(4,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
         },
+        hubSite,
         2
       );
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(5,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0Ijo0MDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0Ijo0MDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
         },
+        hubSite,
         2
       );
       expect(streams).toHaveLength(5);
@@ -122,20 +140,30 @@ describe('getBatchedStreams function', () => {
     }
   });
 
-
   it('can properly generate streams based on limit if provided', async () => {
     // Setup
     const randTerms = faker.random.words();
-
-    const request: IContentSearchRequest = {
-      filter: { terms: randTerms },
-      options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' },
-    };
     
     // Test
     try {
       const limit: number = 523;
-      const streams: PagingStream[] = await getBatchedStreams(request, limit);
+      const batchSearch: BatchSearch = {
+        request: {
+          filter: { terms: randTerms },
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
+        },
+        siteUrl: 'arcgis.com',
+        siteModel: { item: {} as any },
+        limit
+      }
+
+      const hubSite: HubSite = {
+        siteUrl: batchSearch.siteUrl,
+        siteModel: batchSearch.siteModel,
+        portalUrl: batchSearch.request.options?.portal  || ''
+      }
+
+      const streams: PagingStream[] = await getBatchedStreams(batchSearch);
 
       // Assert
       expect(searchContentMock).toHaveBeenCalledTimes(0);
@@ -145,32 +173,36 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(1,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' }
         },
+        hubSite,
         3
       );
 
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(2,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxNTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxNTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
+        hubSite,
         3
       );
 
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(3,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ=='}
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'}
         },
+        hubSite,
         3
       );
 
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(4,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NzMsInN0YXJ0Ijo0NTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==' }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NzMsInN0YXJ0Ijo0NTF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
+        hubSite,
         1
       );
       
@@ -179,6 +211,8 @@ describe('getBatchedStreams function', () => {
       fail(err);
     }
   });
+
+
 
 });
 

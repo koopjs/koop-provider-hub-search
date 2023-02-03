@@ -49,13 +49,10 @@ type HubApiRequest = {
 export class HubApiModel {
 
   async getStream(request: Request) {
+   
     const { res: { locals: { searchRequestBody, siteModel, arcgisPortal, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
     const hubSiteModel = siteModel || await this.fetchHubSiteModel(siteIdentifier, this.getRequestOptions(arcgisPortal));
-
     this.preprocessSearchRequest(searchRequestBody);
-
-    searchRequestBody.options.fields =
-      `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}`;
 
     if (searchRequestBody.options.fields) {
       searchRequestBody.options.fields = this.getValidHubApiFields(searchRequestBody.options.fields);
@@ -84,15 +81,21 @@ export class HubApiModel {
     // scraping entire database
     this.validateRequestScope(searchRequestBody);
 
+    const searchRequestWithRequiredFields : IContentSearchRequest = _.cloneDeep(searchRequestBody);
+    searchRequestWithRequiredFields.options.fields =
+      searchRequestBody.options.fields 
+        ? `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}` : 
+          REQUIRED_FIELDS.join(',');
+
     const pagingStreams: PagingStream[] = await getBatchedStreams({
-      request: searchRequestBody,
+      request: searchRequestWithRequiredFields,
       siteUrl: siteIdentifier,
       siteModel: hubSiteModel,
       limit
     });
 
     const pass: PassThrough = new PassThrough({ objectMode: true });
-    return searchRequestBody.options.sortField
+    return searchRequestWithRequiredFields.options.sortField
       ? this.combineStreamsInSequence(pagingStreams, pass)
       : this.combineStreamsNotInSequence(pagingStreams, pass);
   }

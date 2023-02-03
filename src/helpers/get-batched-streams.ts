@@ -6,19 +6,19 @@ import { PagingStream } from '../paging-stream';
 import { getPagingStream } from './get-paging-stream';
 import { IModel } from '@esri/hub-common';
 
-type BatchSearchRequest = {
+export type BatchSearch = {
   request: IContentSearchRequest,
   siteUrl: string,
   siteModel: IModel,
   limit?: number | undefined
 }
-export const getBatchedStreams = async (batchSearchRequest: BatchSearchRequest): Promise<PagingStream[]> => {
+export const getBatchedStreams = async (batchSearchRequest: BatchSearch): Promise<PagingStream[]> => {
   const {
     request,
     siteUrl,
     siteModel,
     limit
-  }: BatchSearchRequest = batchSearchRequest;
+  }: BatchSearch = batchSearchRequest;
 
   const { numBatches, pagesPerBatch, pageSize } = await getBatchingParams(request, limit);
   const pageKeys: string[] = await getBatchPageKeys(
@@ -33,7 +33,15 @@ export const getBatchedStreams = async (batchSearchRequest: BatchSearchRequest):
     return clone;
   });
   return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
-    return getPagingStream(batchRequest, siteUrl, siteModel, getPagesPerBatch(limit, i, requests, pagesPerBatch));
+    return getPagingStream(
+      batchRequest, 
+      {
+        siteUrl, 
+        siteModel,
+        portalUrl: batchRequest.options.portal
+      }, 
+      getPagesPerBatch(limit, i, requests, pagesPerBatch)
+      );
   });
 };
 

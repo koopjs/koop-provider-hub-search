@@ -1,26 +1,23 @@
-import { IModel } from "@esri/hub-common";
 import { IContentSearchRequest, searchDatasets } from "@esri/hub-search";
 import { PagingStream } from "../paging-stream";
-import { enrichDataset } from "./enrich-dataset";
+import { enrichDataset, HubSite } from "./enrich-dataset";
+export const getPagingStream = (searchRequest: IContentSearchRequest, hubSite: HubSite, pagesPerBatch?: number): PagingStream => {
+  return new PagingStream({
+    firstPageParams: searchRequest,
 
-export const getPagingStream =
-  (request: IContentSearchRequest, siteUrl: string, siteModel: IModel, pagesPerBatch?: number): PagingStream => {
-    return new PagingStream({
-      firstPageParams: request,
+    loadPage: (params: IContentSearchRequest | string) => {
+      if (typeof params === 'string') {
+        return fetch(params)
+          .then(res => res.json());
+      }
 
-      loadPage: (params: IContentSearchRequest | string) => {
-        if (typeof params === 'string') {
-          return fetch(params)
-            .then(res => res.json());
-        }
+      return searchDatasets(params); // first page request
+    },
 
-        return searchDatasets(params); // first page request
-      },
+    streamPage: (response, push) => response.data.forEach(result => push(enrichDataset(result.attributes, hubSite))),
 
-      streamPage: (response, push) => response.data.forEach(result => push(enrichDataset(result.attributes, { siteUrl, portalUrl: request.options.portal, siteModel }))),
+    getNextPageParams: response => response.meta?.next,
 
-      getNextPageParams: response => response.meta?.next,
-
-      pageLimit: pagesPerBatch
-    });
-  };
+    pageLimit: pagesPerBatch
+  });
+};
