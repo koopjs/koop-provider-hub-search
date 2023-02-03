@@ -1,5 +1,5 @@
 import { IItem } from '@esri/arcgis-rest-portal';
-import { DatasetResource, datasetToItem, datasetToContent, getProxyUrl, getContentSiteUrls, IHubRequestOptions, IModel, parseDatasetId } from '@esri/hub-common';
+import { DatasetResource, datasetToItem, datasetToContent, getProxyUrl, IHubRequestOptions, parseDatasetId } from '@esri/hub-common';
 import { isPage } from '@esri/hub-sites';
 import * as _ from 'lodash';
 const WFS_SERVER = 'WFSServer';
@@ -9,7 +9,6 @@ type HubDataset = Record<string, any>;
 export type HubSite = {
     siteUrl: string,
     portalUrl: string,
-    siteModel: IModel
 };
 
 export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
@@ -19,17 +18,16 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
         attributes: dataset
     } as DatasetResource);
 
-    const { siteUrl, portalUrl, siteModel }: HubSite = hubsite;
-
+    const { siteUrl, portalUrl }: HubSite = hubsite;
+    const { identifier, urls: { relative } } = content;
+    
     const {
         structuredLicense: { url = null } = {}
     } = dataset;
 
     const additionalFields: Record<string, any> = {}; // container object for additional fields
-
-    const { relative: relativePath } = getContentSiteUrls(content, siteModel);
-    additionalFields.hubLandingPage = concatUrlAndPath(siteUrl, relativePath);
-    additionalFields.downloadLink = concatUrlAndPath(siteUrl, content.identifier);
+    additionalFields.hubLandingPage = concatUrlAndPath(siteUrl, relative);
+    additionalFields.downloadLink = concatUrlAndPath(siteUrl, identifier);
 
     additionalFields.agoLandingPage = getAgoLandingPageUrl(dataset.id, portalUrl);
     additionalFields.license = getDatasetLicense(dataset);

@@ -34,7 +34,6 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        siteModel: { item: {} as any },
         portalUrl: 'portal.arcgis.com'
       }
 
@@ -89,7 +88,6 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        siteModel: { item: {} as any },
         portalUrl: 'portal.arcgis.com'
       }
 
@@ -182,7 +180,6 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        siteModel: { item: {} as any },
         portalUrl: 'portal.arcgis.com'
       }
 

@@ -49,9 +49,8 @@ type HubApiRequest = {
 export class HubApiModel {
 
   async getStream(request: Request) {
-   
-    const { res: { locals: { searchRequestBody, siteModel, arcgisPortal, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
-    const hubSiteModel = siteModel || await this.fetchHubSiteModel(siteIdentifier, this.getRequestOptions(arcgisPortal));
+
+    const { res: { locals: { searchRequestBody, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
     this.preprocessSearchRequest(searchRequestBody);
 
     if (searchRequestBody.options.fields) {
@@ -61,36 +60,19 @@ export class HubApiModel {
     }
 
     // Only fetch site if site is provided and either group or orgid is undefined
-    if (
-      searchRequestBody.options.site &&
-      (
-        !this.scopedFieldValueIsValid(searchRequestBody.filter.group) ||
-        !this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)
-      )
-    ) {
-      const siteCatalog = await this.getSiteCatalog(searchRequestBody, searchRequestBody.options.site);
-      if (!this.scopedFieldValueIsValid(searchRequestBody.filter.group)) {
-        searchRequestBody.filter.group = siteCatalog.groups;
-      }
-      if (!this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)) {
-        searchRequestBody.filter.orgid = siteCatalog.orgId;
-      }
+    if (this.shouldFetchSite(searchRequestBody)) {
+      await this.addGroupAndOrgId(searchRequestBody);
     }
-
+    
     // Validate the scope to ensure that a group, org, and/or id are present to avoid
     // scraping entire database
     this.validateRequestScope(searchRequestBody);
 
-    const searchRequestWithRequiredFields : IContentSearchRequest = _.cloneDeep(searchRequestBody);
-    searchRequestWithRequiredFields.options.fields =
-      searchRequestBody.options.fields 
-        ? `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}` : 
-          REQUIRED_FIELDS.join(',');
+    const searchRequestWithRequiredFields = this.addRequiredFields(searchRequestBody);
 
     const pagingStreams: PagingStream[] = await getBatchedStreams({
       request: searchRequestWithRequiredFields,
       siteUrl: siteIdentifier,
-      siteModel: hubSiteModel,
       limit
     });
 
@@ -128,6 +110,25 @@ export class HubApiModel {
     return pass;
   }
 
+  private addRequiredFields(searchRequestBody: IContentSearchRequest) {
+    const searchReqBody: IContentSearchRequest = _.cloneDeep(searchRequestBody);
+    searchReqBody.options.fields =
+      searchRequestBody.options.fields
+        ? `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}` :
+        REQUIRED_FIELDS.join(',');
+    return searchReqBody;
+  }
+
+  private async addGroupAndOrgId(searchRequestBody) {
+    const siteCatalog = await this.getSiteCatalog(searchRequestBody, searchRequestBody.options.site);
+    if (!this.scopedFieldValueIsValid(searchRequestBody.filter.group)) {
+      searchRequestBody.filter.group = siteCatalog.groups;
+    }
+    if (!this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)) {
+      searchRequestBody.filter.orgid = siteCatalog.orgId;
+    }
+  }
+
   private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
     this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     return pass;
@@ -144,30 +145,16 @@ export class HubApiModel {
     destination.emit('end');
   }
 
+  private shouldFetchSite(searchRequestBody: IContentSearchRequest): boolean {
+    return searchRequestBody.options.site &&
+      (
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.group) ||
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)
+      );
+  }
+
   // TODO remove when koop-core no longer requires
   getData() { }
-
-
-  private async fetchHubSiteModel(hostname, opts): Promise<IModel> {
-    try {
-      return await fetchSiteModel(hostname, opts);
-    } catch (err) {
-      // Throw 404 if domain does not exist (first) or site is private (second)
-      if (err.message.includes(':: 404') || err.response?.error?.code === 403) {
-        throw new RemoteServerError(err.message, null, 404);
-      }
-      throw new RemoteServerError(err.message, null, 500);
-    }
-  }
-
-  private getRequestOptions(portalUrl) {
-    return {
-      isPortal: false,
-      hubApiUrl: getHubApiUrl(portalUrl),
-      portal: getPortalApiUrl(portalUrl),
-      authentication: null,
-    };
-  }
 
   private preprocessSearchRequest(searchRequest: IContentSearchRequest): void {
     if (!searchRequest.filter) {

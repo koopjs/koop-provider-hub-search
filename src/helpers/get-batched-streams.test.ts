@@ -24,8 +24,7 @@ describe('getBatchedStreams function', () => {
         filter: { terms: randTerms },
         options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
       },
-      siteUrl: 'arcgis.com',
-      siteModel: { item: {} as any }
+      siteUrl: 'arcgis.com'
     }
 
     // Mock
@@ -64,12 +63,10 @@ describe('getBatchedStreams function', () => {
         filter: { terms: randTerms },
         options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
       },
-      siteUrl: 'arcgis.com',
-      siteModel: { item: {} as any }
+      siteUrl: 'arcgis.com'
     }
     const hubSite: HubSite = {
       siteUrl: batchSearch.siteUrl,
-      siteModel: batchSearch.siteModel,
       portalUrl: batchSearch.request.options?.portal  || ''
     }
 
@@ -153,13 +150,11 @@ describe('getBatchedStreams function', () => {
           options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
         },
         siteUrl: 'arcgis.com',
-        siteModel: { item: {} as any },
         limit
       }
 
       const hubSite: HubSite = {
         siteUrl: batchSearch.siteUrl,
-        siteModel: batchSearch.siteModel,
         portalUrl: batchSearch.request.options?.portal  || ''
       }
 
