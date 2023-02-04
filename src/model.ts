@@ -63,7 +63,7 @@ export class HubApiModel {
     if (this.shouldFetchSite(searchRequestBody)) {
       await this.addGroupAndOrgId(searchRequestBody);
     }
-    
+
     // Validate the scope to ensure that a group, org, and/or id are present to avoid
     // scraping entire database
     this.validateRequestScope(searchRequestBody);
@@ -209,9 +209,21 @@ export class HubApiModel {
       portal: getPortalApiUrl(searchRequest.options.portal),
     };
 
-    const siteModel = await fetchSiteModel(site, requestOptions);
+    const siteModel = await this.fetchHubSiteModel(site, requestOptions);
 
     return _.get(siteModel, 'data.catalog', {});
+  }
+
+  private async fetchHubSiteModel(hostname, opts) {
+    try {
+      return await fetchSiteModel(hostname, opts);
+    } catch (err) {
+      // Throw 404 if domain does not exist (first) or site is private (second)
+      if (err.message.includes(':: 404') || err.response?.error?.code === 403) {
+        throw new RemoteServerError(err.message, null, 404);
+      }
+      throw new RemoteServerError(err.message, null, 500);
+    }
   }
 
   private scopedFieldValueIsValid(val: string | string[] | IContentFieldFilter): boolean {
