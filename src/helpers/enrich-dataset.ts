@@ -20,10 +20,6 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
 
     const { siteUrl, portalUrl }: HubSite = hubsite;
     const { identifier, urls: { relative } } = content;
-    
-    const {
-        structuredLicense: { url = null } = {}
-    } = dataset;
 
     const additionalFields: Record<string, any> = {}; // container object for additional fields
     additionalFields.hubLandingPage = concatUrlAndPath(siteUrl, relative);
@@ -52,11 +48,11 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
     }
 
     if (dataset.supportedExtensions?.includes(WFS_SERVER)) {
-        additionalFields.accessUrlWFS = ogcUrl(url, 'WFS');
+        additionalFields.accessUrlWFS = ogcUrl(dataset.url, 'WFS');
     }
 
     if (dataset.supportedExtensions?.includes(WMS_SERVER)) {
-        additionalFields.accessUrlWMS = ogcUrl(url, 'WMS');
+        additionalFields.accessUrlWMS = ogcUrl(dataset.url, 'WMS');
     }
 
     return {
