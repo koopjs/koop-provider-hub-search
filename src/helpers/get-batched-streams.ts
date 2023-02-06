@@ -5,12 +5,23 @@ import { getBatchingParams } from './get-batching-params';
 import { PagingStream } from '../paging-stream';
 import { getPagingStream } from './get-paging-stream';
 
-export const getBatchedStreams = async (request: IContentSearchRequest, limit?: number | undefined): Promise<PagingStream[]> => {    
+export type BatchSearch = {
+  request: IContentSearchRequest,
+  siteUrl: string,
+  limit?: number | undefined
+}
+export const getBatchedStreams = async (batchSearchRequest: BatchSearch): Promise<PagingStream[]> => {
+  const {
+    request,
+    siteUrl,
+    limit
+  }: BatchSearch = batchSearchRequest;
+
   const { numBatches, pagesPerBatch, pageSize } = await getBatchingParams(request, limit);
-  const pageKeys: string[] = await getBatchPageKeys( 
-    numBatches, 
-    pagesPerBatch, 
-    pageSize, 
+  const pageKeys: string[] = await getBatchPageKeys(
+    numBatches,
+    pagesPerBatch,
+    pageSize,
     limit
   );
   const requests: IContentSearchRequest[] = pageKeys.map((key: string) => {
@@ -19,7 +30,14 @@ export const getBatchedStreams = async (request: IContentSearchRequest, limit?: 
     return clone;
   });
   return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
-    return getPagingStream(batchRequest, getPagesPerBatch(limit, i, requests, pagesPerBatch));
+    return getPagingStream(
+      batchRequest, 
+      {
+        siteUrl, 
+        portalUrl: batchRequest.options.portal
+      }, 
+      getPagesPerBatch(limit, i, requests, pagesPerBatch)
+      );
   });
 };
 
