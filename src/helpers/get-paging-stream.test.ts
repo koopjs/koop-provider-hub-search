@@ -46,7 +46,7 @@ describe('getPagingStream function', () => {
             attributes: {
               id: '3',
               title: 'yellow submarine',
-              type: 'feature layer'
+              description: 'feature layer'
             }
           }
         ],
@@ -54,9 +54,16 @@ describe('getPagingStream function', () => {
 
       mockedSearchDatasets.mockResolvedValue(mockedResponse);
       mockEnrichDataset.mockReturnValue({
-        id: '3',
-        title: 'yellow submarine',
-        type: 'feature layer'
+        type: 'Feature',
+        geometry: {
+          type: '',
+          coordinates: []
+        },
+        properties: {
+          id: '3',
+          title: 'yellow submarine',
+          description: 'feature layer'
+        }
       });
       // Test
       const responses = [];
@@ -73,7 +80,7 @@ describe('getPagingStream function', () => {
       expect(mockedSearchDatasets).toBeCalledTimes(1);
       expect(mockedSearchDatasets).toHaveBeenNthCalledWith(1, request);
       expect(responses).toHaveLength(1);
-      expect(responses[0]).toEqual(mockedResponse.data[0].attributes);
+      expect(responses[0]['properties']).toEqual(mockedResponse.data[0].attributes);
     } catch (err) {
       fail(err);
     }
@@ -99,7 +106,7 @@ describe('getPagingStream function', () => {
             type: 'dataset',
             attributes: {
               title: 'yellow submarine',
-              type: 'table'
+              description: 'feature layer'
             }
           }
         ],
@@ -115,7 +122,7 @@ describe('getPagingStream function', () => {
             type: 'dataset',
             attributes: {
               title: 'yellow submarine',
-              type: 'table'
+              description: 'feature layer'
             }
           }
         ],
@@ -123,11 +130,18 @@ describe('getPagingStream function', () => {
 
       mockedSearchDatasets.mockResolvedValueOnce(mockedResponseOne);
       fetch.mockResolvedValueOnce({
-        json: async () => await mockedResponseTwo 
+        json: async () => await mockedResponseTwo
       });
       mockEnrichDataset.mockReturnValue({
-        title: 'yellow submarine',
-        type: 'table'
+        type: 'Feature',
+        geometry: {
+          type: '',
+          coordinates: []
+        },
+        properties: {
+          title: 'yellow submarine',
+          description: 'feature layer'
+        }
       });
 
       // Test
@@ -147,8 +161,8 @@ describe('getPagingStream function', () => {
       expect(fetch).toBeCalledTimes(1);
       expect(fetch).toHaveBeenNthCalledWith(1, 'next_url');
       expect(responses).toHaveLength(2);
-      expect(responses[0]).toEqual(mockedResponseOne.data[0].attributes);
-      expect(responses[1]).toEqual(mockedResponseTwo.data[0].attributes);
+      expect(responses[0]['properties']).toEqual(mockedResponseOne.data[0].attributes);
+      expect(responses[1]['properties']).toEqual(mockedResponseTwo.data[0].attributes);
     } catch (err) {
       fail(err);
     }
@@ -197,12 +211,19 @@ describe('getPagingStream function', () => {
       }
       mockedSearchDatasets.mockResolvedValueOnce(mockedResponseOne);
       mockEnrichDataset.mockReturnValue({
-        title: 'yellow submarine',
-        type: 'feature layer'
+        type: 'Feature',
+        geometry: {
+          type: '',
+          coordinates: []
+        },
+        properties: {
+          title: 'yellow submarine',
+          type: 'feature layer'
+        }
       });
 
       fetch.mockResolvedValueOnce({
-        json: async () => await mockedResponseTwo 
+        json: async () => await mockedResponseTwo
       });
 
 
@@ -222,7 +243,7 @@ describe('getPagingStream function', () => {
       expect(mockedSearchDatasets).toHaveBeenNthCalledWith(1, request);
       expect(fetch).toHaveBeenCalledTimes(1);
       expect(responses).toHaveLength(2);
-      expect(responses[0]).toEqual(mockedResponseOne.data[0].attributes);
+      expect(responses[0]['properties']).toEqual(mockedResponseOne.data[0].attributes);
     } catch (err) {
       fail(err);
     }

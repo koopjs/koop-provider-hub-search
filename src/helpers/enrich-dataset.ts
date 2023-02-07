@@ -4,7 +4,6 @@ import { isPage } from '@esri/hub-sites';
 import * as _ from 'lodash';
 const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
-
 type HubDataset = Record<string, any>;
 export type HubSite = {
     siteUrl: string,
@@ -55,11 +54,34 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
         additionalFields.accessUrlWMS = ogcUrl(dataset.url, 'WMS');
     }
 
-    return {
+    return hubDatasetToFeature({
         ...dataset,
         ...additionalFields
-    };
+    });
 };
+
+function hubDatasetToFeature(hubDataset: HubDataset) {
+    const { type, rings } = hubDataset?.boundary?.geometry ?? {};
+
+    return {
+        type: 'Feature',
+        geometry: {
+            type: type && capitalize(type),
+            coordinates: rings
+        },
+        properties: _.omit(hubDataset, ['boundary'])
+    };
+}
+
+function capitalize(word) {
+    return word
+        .split('')
+        .map((letter, index) =>
+            index ? letter.toLowerCase() : letter.toUpperCase(),
+        )
+        .join('');
+}
+
 
 function hasTags(hubDataset: HubDataset) {
     const maybeTags = hubDataset.tags;
