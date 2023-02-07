@@ -19,6 +19,20 @@ export type HubSite = {
     portalUrl: string,
 };
 
+/**
+ * Shape structure mapping from Elasticsearch type
+ * to valid GeoJSON type  
+ */
+const ELASTIC_TO_GEOJSON = {
+    'point': 'Point',
+    'linestring': 'LineString',
+    'polygon': 'Polygon',
+    'multipoint': 'MultiPoint',
+    'multilinestring': 'MultiLineString',
+    'multipolygon': 'MultiPolygon',
+    'geometrycollection': 'GeometryCollection'
+};
+
 export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
     // Download and Hub Links must be generated from Content
     const content = datasetToContent({
@@ -167,16 +181,3 @@ function objectWithoutKeys(obj, keys): Record<string, any> {
     }, {});
 }
 
-/**
- * Shape structure mapping from Elasticsearch type
- * to valid GeoJSON type  
- */
-const ELASTIC_TO_GEOJSON = {
-    'point': 'Point',
-    'linestring': 'LineString',
-    'polygon': 'Polygon',
-    'multipoint': 'MultiPoint',
-    'multilinestring': 'MultiLineString',
-    'multipolygon': 'MultiPolygon',
-    'geometrycollection': 'GeometryCollection'
-};
