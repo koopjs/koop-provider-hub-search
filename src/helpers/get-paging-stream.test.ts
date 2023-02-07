@@ -56,7 +56,7 @@ describe('getPagingStream function', () => {
       mockEnrichDataset.mockReturnValue({
         type: 'Feature',
         geometry: {
-          type: '',
+          type: 'Polygon',
           coordinates: []
         },
         properties: {
@@ -135,7 +135,7 @@ describe('getPagingStream function', () => {
       mockEnrichDataset.mockReturnValue({
         type: 'Feature',
         geometry: {
-          type: '',
+          type: 'Polygon',
           coordinates: []
         },
         properties: {
@@ -213,7 +213,7 @@ describe('getPagingStream function', () => {
       mockEnrichDataset.mockReturnValue({
         type: 'Feature',
         geometry: {
-          type: '',
+          type: 'Polygon',
           coordinates: []
         },
         properties: {

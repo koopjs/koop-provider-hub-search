@@ -5,12 +5,21 @@ import * as _ from 'lodash';
 const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
 type HubDataset = Record<string, any>;
+type GeometryTypes = 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon' | 'GeometryCollection';
+type Feature = {
+    type: 'Feature',
+    geometry: {
+        type: GeometryTypes,
+        coordinates: number[]
+    },
+    properties: HubDataset
+}
 export type HubSite = {
     siteUrl: string,
     portalUrl: string,
 };
 
-export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
+export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
     // Download and Hub Links must be generated from Content
     const content = datasetToContent({
         id: dataset.id,
@@ -60,28 +69,17 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
     });
 };
 
-function hubDatasetToFeature(hubDataset: HubDataset) {
+function hubDatasetToFeature(hubDataset: HubDataset): Feature {
     const { type, rings } = hubDataset?.boundary?.geometry ?? {};
-
     return {
         type: 'Feature',
         geometry: {
-            type: type && capitalize(type),
+            type: ELASTIC_TO_GEOJSON[type],
             coordinates: rings
         },
-        properties: _.omit(hubDataset, ['boundary'])
+        properties: objectWithoutKeys(hubDataset, ['boundary'])
     };
 }
-
-function capitalize(word) {
-    return word
-        .split('')
-        .map((letter, index) =>
-            index ? letter.toLowerCase() : letter.toUpperCase(),
-        )
-        .join('');
-}
-
 
 function hasTags(hubDataset: HubDataset) {
     const maybeTags = hubDataset.tags;
@@ -157,3 +155,28 @@ function getDownloadLinkFn(downloadLink: string, hubDataset: any) {
 function ogcUrl(datasetUrl: string, type: 'WMS' | 'WFS' = 'WMS') {
     return datasetUrl.replace(/rest\/services/i, 'services').replace(/\d+$/, `${type}Server?request=GetCapabilities&service=${type}`);
 }
+
+/**
+ * fast approach to remove keys from an object
+ * (from babel transplier)
+ */
+function objectWithoutKeys(obj, keys): Record<string, any> {
+    return Object.keys(obj).reduce((newObject, key) => {
+        if (keys.indexOf(key) === -1) newObject[key] = obj[key];
+        return newObject;
+    }, {});
+}
+
+/**
+ * Shape structure mapping from Elasticsearch type
+ * to valid GeoJSON type  
+ */
+const ELASTIC_TO_GEOJSON = {
+    'point': 'Point',
+    'linestring': 'LineString',
+    'polygon': 'Polygon',
+    'multipoint': 'MultiPoint',
+    'multilinestring': 'MultiLineString',
+    'multipolygon': 'MultiPolygon',
+    'geometrycollection': 'GeometryCollection'
+};

@@ -116,6 +116,8 @@ describe('enrichDataset function', () => {
         };
         const expectedKeyword = 'ArcGIS Hub page';
         const enrichedDataset = enrichDataset(datasetWithNoTags, hubsite);
+        console.log('err soo');
+        console.log(enrichedDataset);
         expect(
             enrichedDataset.properties.keyword[0],
         ).toBe(expectedKeyword);
