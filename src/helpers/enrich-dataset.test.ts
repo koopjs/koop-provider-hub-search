@@ -117,9 +117,9 @@ describe('enrichDataset function', () => {
         const expectedKeyword = 'ArcGIS Hub page';
         const enrichedDataset = enrichDataset(datasetWithNoTags, hubsite);
         console.log('err soo');
-        console.log(enrichedDataset);
+        console.log(enrichedDataset.properties);
         expect(
-            enrichedDataset.properties.keyword[0],
+            enrichedDataset.properties?.keyword[0],
         ).toBe(expectedKeyword);
     })
 
@@ -301,18 +301,20 @@ describe('enrichDataset function', () => {
         };
         const geojson = enrichDataset(hubDataset, { siteUrl: 'arcgis.com', portalUrl: 'portal.com' });
 
-
         expect(geojson.geometry).toBeDefined();
         expect(geojson.geometry.type).toBe('Polygon');
+        console.log('asdfsd');
+        console.log(geojson.geometry.coordinates);
         expect(geojson.geometry.coordinates).toStrictEqual([
             [
-                [-77.10272947561813, 38.972065644420645],
-                [-76.92659446846153, 38.972065644420645],
-                [-76.92659446846153, 38.874986889968675],
-                [-77.10272947561813, 38.874986889968675],
-                [-77.10272947561813, 38.972065644420645]
+              [ -77.10272947561813, 38.972065644420645 ],
+              [ -77.10272947561813, 38.874986889968675 ],
+              [ -76.92659446846153, 38.874986889968675 ],
+              [ -76.92659446846153, 38.972065644420645 ],
+              [ -77.10272947561813, 38.972065644420645 ]
             ]
-        ]);
+          ]
+        );
         expect(geojson.type).toBe('Feature');
         expect(geojson.properties).toBeDefined();
         expect(geojsonValidation.isFeature(geojson)).toBe(true);

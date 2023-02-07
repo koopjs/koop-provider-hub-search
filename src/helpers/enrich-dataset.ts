@@ -1,6 +1,7 @@
 import { IItem } from '@esri/arcgis-rest-portal';
 import { DatasetResource, datasetToItem, datasetToContent, getProxyUrl, IHubRequestOptions, parseDatasetId } from '@esri/hub-common';
 import { isPage } from '@esri/hub-sites';
+import * as geojsonRewind from 'geojson-rewind';
 import * as _ from 'lodash';
 const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
@@ -20,17 +21,17 @@ export type HubSite = {
 };
 
 /**
- * Shape structure mapping from Elasticsearch type
+ * Mapping from ElasticSearch geo_shape type
  * to valid GeoJSON type  
  */
-const ELASTIC_TO_GEOJSON = {
-    'point': 'Point',
-    'linestring': 'LineString',
-    'polygon': 'Polygon',
-    'multipoint': 'MultiPoint',
-    'multilinestring': 'MultiLineString',
-    'multipolygon': 'MultiPolygon',
-    'geometrycollection': 'GeometryCollection'
+const elasticToGeojsonType = {
+    point: 'Point',
+    linestring: 'LineString',
+    polygon: 'Polygon',
+    multipoint: 'MultiPoint',
+    multilinestring: 'MultiLineString',
+    multipolygon: 'MultiPolygon',
+    geometrycollection: 'GeometryCollection'
 };
 
 export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
@@ -85,14 +86,16 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
 
 function hubDatasetToFeature(hubDataset: HubDataset): Feature {
     const { type, rings } = hubDataset?.boundary?.geometry ?? {};
-    return {
+    // clockwise polygon rings rewind transformation 
+    // is necesssary to follow right hand rule for valid geoJSON
+    return geojsonRewind({
         type: 'Feature',
         geometry: {
-            type: ELASTIC_TO_GEOJSON[type],
+            type: elasticToGeojsonType[type],
             coordinates: rings
         },
         properties: objectWithoutKeys(hubDataset, ['boundary'])
-    };
+    }, false);
 }
 
 function hasTags(hubDataset: HubDataset) {

@@ -57,6 +57,7 @@
     "@esri/hub-sites": "^12.3.2",
     "@esri/hub-teams": "^9.32.1",
     "@types/lodash": "^4.14.171",
+    "geojson-rewind": "^0.3.1",
     "isomorphic-fetch": "^3.0.0",
     "isomorphic-form-data": "^2.0.0",
     "lodash": "^4.17.21",
