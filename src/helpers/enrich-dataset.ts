@@ -1,17 +1,40 @@
 import { IItem } from '@esri/arcgis-rest-portal';
 import { DatasetResource, datasetToItem, datasetToContent, getProxyUrl, IHubRequestOptions, parseDatasetId } from '@esri/hub-common';
 import { isPage } from '@esri/hub-sites';
+import * as geojsonRewind from 'geojson-rewind';
 import * as _ from 'lodash';
 const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
-
 type HubDataset = Record<string, any>;
+type GeometryTypes = 'Point' | 'LineString' | 'Polygon' | 'MultiPoint' | 'MultiLineString' | 'MultiPolygon' | 'GeometryCollection';
+type Feature = {
+    type: 'Feature',
+    geometry: {
+        type: GeometryTypes,
+        coordinates: number[]
+    },
+    properties: HubDataset
+}
 export type HubSite = {
     siteUrl: string,
     portalUrl: string,
 };
 
-export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
+/**
+ * Mapping from ElasticSearch geo_shape type
+ * to valid GeoJSON type  
+ */
+const elasticToGeojsonType = {
+    point: 'Point',
+    linestring: 'LineString',
+    polygon: 'Polygon',
+    multipoint: 'MultiPoint',
+    multilinestring: 'MultiLineString',
+    multipolygon: 'MultiPolygon',
+    geometrycollection: 'GeometryCollection'
+};
+
+export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
     // Download and Hub Links must be generated from Content
     const content = datasetToContent({
         id: dataset.id,
@@ -55,11 +78,25 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite) {
         additionalFields.accessUrlWMS = ogcUrl(dataset.url, 'WMS');
     }
 
-    return {
+    return hubDatasetToFeature({
         ...dataset,
         ...additionalFields
-    };
+    });
 };
+
+function hubDatasetToFeature(hubDataset: HubDataset): Feature {
+    const { type, rings } = hubDataset?.boundary?.geometry ?? {};
+    // clockwise polygon rings rewind transformation 
+    // is necesssary to follow right hand rule for valid geoJSON
+    return geojsonRewind({
+        type: 'Feature',
+        geometry: {
+            type: elasticToGeojsonType[type],
+            coordinates: rings
+        },
+        properties: objectWithoutKeys(hubDataset, ['boundary'])
+    }, false);
+}
 
 function hasTags(hubDataset: HubDataset) {
     const maybeTags = hubDataset.tags;
@@ -135,3 +172,15 @@ function getDownloadLinkFn(downloadLink: string, hubDataset: any) {
 function ogcUrl(datasetUrl: string, type: 'WMS' | 'WFS' = 'WMS') {
     return datasetUrl.replace(/rest\/services/i, 'services').replace(/\d+$/, `${type}Server?request=GetCapabilities&service=${type}`);
 }
+
+/**
+ * fast approach to remove keys from an object
+ * (from babel transplier)
+ */
+function objectWithoutKeys(obj, keys): Record<string, any> {
+    return Object.keys(obj).reduce((newObject, key) => {
+        if (keys.indexOf(key) === -1) newObject[key] = obj[key];
+        return newObject;
+    }, {});
+}
+
