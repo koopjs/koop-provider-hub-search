@@ -116,8 +116,6 @@ describe('enrichDataset function', () => {
         };
         const expectedKeyword = 'ArcGIS Hub page';
         const enrichedDataset = enrichDataset(datasetWithNoTags, hubsite);
-        console.log('err soo');
-        console.log(enrichedDataset.properties);
         expect(
             enrichedDataset.properties?.keyword[0],
         ).toBe(expectedKeyword);
@@ -303,8 +301,6 @@ describe('enrichDataset function', () => {
 
         expect(geojson.geometry).toBeDefined();
         expect(geojson.geometry.type).toBe('Polygon');
-        console.log('asdfsd');
-        console.log(geojson.geometry.coordinates);
         expect(geojson.geometry.coordinates).toStrictEqual([
             [
               [ -77.10272947561813, 38.972065644420645 ],

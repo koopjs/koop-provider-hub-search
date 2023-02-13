@@ -29,7 +29,8 @@ const ADDON_FIELDS = [
   'accessUrlWFS',
   'accessUrlWMS',
   'accessUrlGeoJSON',
-  'license'
+  'license',
+  'agoLandingPage'
 ];
 
 type HubApiRequest = {
