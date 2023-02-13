@@ -66,6 +66,7 @@ describe('enrichDataset function', () => {
             license: '',
             isProxiedCSV: false,
             isLayer: true,
+            accessUrlCSV: "https://arcgis.com/CALFIRE::DCAT_Test.csv?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D",
             accessUrlGeoJSON: 'https://arcgis.com/CALFIRE::DCAT_Test.geojson?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
             accessUrlKML: 'https://arcgis.com/CALFIRE::DCAT_Test.kml?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
             accessUrlShapeFile: 'https://arcgis.com/CALFIRE::DCAT_Test.zip?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D'
