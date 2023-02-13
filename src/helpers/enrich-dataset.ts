@@ -64,6 +64,7 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
 
     if (isLayer(dataset)) {
         additionalFields.accessUrlGeoJSON = downloadLinkFor('geojson');
+        additionalFields.accessUrlCSV = downloadLinkFor('csv');
         if (_.has(dataset, 'layer.geometryType')) {
             additionalFields.accessUrlKML = downloadLinkFor('kml');
             additionalFields.accessUrlShapeFile = downloadLinkFor('zip');
