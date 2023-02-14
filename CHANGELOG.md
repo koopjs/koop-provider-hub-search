@@ -4,7 +4,7 @@
 Added
 - Added additional data enrichments [#19](https://github.com/koopjs/koop-provider-hub-search/pull/19)
 - Transformed Hub dataset response to geoJSON [#20](https://github.com/koopjs/koop-provider-hub-search/pull/20)
-- Aadded CSV access URL for layer dataset [#21](https://github.com/koopjs/koop-provider-hub-search/pull/21)
+- Added CSV access URL for layer dataset [#21](https://github.com/koopjs/koop-provider-hub-search/pull/21)
 
 ## 2.1.1
 Fixed
