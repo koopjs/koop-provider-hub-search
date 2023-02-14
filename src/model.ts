@@ -7,76 +7,134 @@ import { IContentFieldFilter, IContentSearchRequest } from '@esri/hub-search';
 import { PassThrough } from 'stream';
 import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
-import { fetchSite, getHubApiUrl, getPortalApiUrl, hubApiRequest, RemoteServerError } from '@esri/hub-common';
+import { fetchSiteModel, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
+
+const REQUIRED_FIELDS = [
+  'id', // used for the dataset landing page URL
+  'type', // used for the dataset landing page URL
+  'slug', // used for the dataset landing page URL
+  'access', // used for detecting proxied csv's
+  'size', // used for detecting proxied csv's
+  'licenseInfo', // required for license resolution
+  'structuredLicense', // required for license resolution
+];
+
+// additional fields due to dataset enrichment
+const ADDON_FIELDS = [
+  'hubLandingPage',
+  'accessUrlCSV',
+  'isLayer',
+  'accessUrlKML',
+  'accessUrlShapeFile',
+  'accessUrlWFS',
+  'accessUrlWMS',
+  'accessUrlGeoJSON',
+  'license',
+  'agoLandingPage'
+];
+
+type HubApiRequest = {
+  res?: {
+    locals: {
+      searchRequestBody?: IContentSearchRequest,
+      siteModel?: IModel,
+      arcgisPortal?: string
+      siteIdentifier?: string,
+    }
+  }
+  query?: {
+    limit?: number
+  }
+}
 
 export class HubApiModel {
 
-  async getStream (request: Request) {
-    const searchRequest: IContentSearchRequest = request.res.locals.searchRequest;
-    this.preprocessSearchRequest(searchRequest);
+  async getStream(request: Request) {
 
-    if (searchRequest.options.fields) {
+    const { res: { locals: { searchRequestBody, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
+    this.preprocessSearchRequest(searchRequestBody);
+
+    if (searchRequestBody.options.fields) {
+      searchRequestBody.options.fields = this.getValidHubApiFields(searchRequestBody.options.fields);
       const validFields: string[] = await hubApiRequest('/fields');
-      this.validateFields(searchRequest, validFields);
+      this.validateFields(searchRequestBody, validFields);
     }
 
     // Only fetch site if site is provided and either group or orgid is undefined
-    if (
-      searchRequest.options.site &&
-      (
-        !this.scopedFieldValueIsValid(searchRequest.filter.group) || 
-        !this.scopedFieldValueIsValid(searchRequest.filter.orgid)
-      )
-    ) {
-      const siteCatalog = await this.getSiteCatalog(searchRequest, searchRequest.options.site);
-      if (!this.scopedFieldValueIsValid(searchRequest.filter.group)) {
-        searchRequest.filter.group = siteCatalog.groups;
-      }
-      if (!this.scopedFieldValueIsValid(searchRequest.filter.orgid)) {
-        searchRequest.filter.orgid = siteCatalog.orgId;
-      }
+    if (this.shouldFetchSite(searchRequestBody)) {
+      await this.addGroupAndOrgId(searchRequestBody);
     }
 
     // Validate the scope to ensure that a group, org, and/or id are present to avoid
     // scraping entire database
-    this.validateRequestScope(searchRequest);
-    
-    const pagingStreams: PagingStream[] = await getBatchedStreams(searchRequest, Number(request.query?.limit));
-    const pass: PassThrough =  new PassThrough({ objectMode: true });
-    return searchRequest.options.sortField 
+    this.validateRequestScope(searchRequestBody);
+
+    const searchRequestWithRequiredFields = this.addRequiredFields(searchRequestBody);
+
+    const pagingStreams: PagingStream[] = await getBatchedStreams({
+      request: searchRequestWithRequiredFields,
+      siteUrl: siteIdentifier,
+      limit
+    });
+
+    const pass: PassThrough = new PassThrough({ objectMode: true });
+    return searchRequestWithRequiredFields.options.sortField
       ? this.combineStreamsInSequence(pagingStreams, pass)
       : this.combineStreamsNotInSequence(pagingStreams, pass);
+  }
+
+  private getValidHubApiFields(fields: string): string {
+    return fields.split(',').filter((field) => !ADDON_FIELDS.includes(field)).join(',');
   }
 
   private combineStreamsNotInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
     let waiting = streams.length;
 
     if (!waiting) {
-      pass.end(() => {});
+      pass.end(() => { });
       return pass;
     }
 
     for (const stream of streams) {
-        stream.on('error', err => {
-          console.error(err);
-          pass.emit('error', err);
-        });
-        pass = stream.pipe(pass, { end: false });
-        stream.once('end', () => {
-          --waiting;
-          if (waiting === 0) {
-            pass.end(() => {});
-          }
-        });
+      stream.on('error', err => {
+        console.error(err);
+        pass.emit('error', err);
+      });
+      pass = stream.pipe(pass, { end: false });
+      stream.once('end', () => {
+        --waiting;
+        if (waiting === 0) {
+          pass.end(() => { });
+        }
+      });
     }
     return pass;
+  }
+
+  private addRequiredFields(searchRequestBody: IContentSearchRequest) {
+    const searchReqBody: IContentSearchRequest = _.cloneDeep(searchRequestBody);
+    searchReqBody.options.fields =
+      searchRequestBody.options.fields
+        ? `${searchRequestBody.options.fields},${REQUIRED_FIELDS.join(',')}` :
+        REQUIRED_FIELDS.join(',');
+    return searchReqBody;
+  }
+
+  private async addGroupAndOrgId(searchRequestBody) {
+    const siteCatalog = await this.getSiteCatalog(searchRequestBody, searchRequestBody.options.site);
+    if (!this.scopedFieldValueIsValid(searchRequestBody.filter.group)) {
+      searchRequestBody.filter.group = siteCatalog.groups;
+    }
+    if (!this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)) {
+      searchRequestBody.filter.orgid = siteCatalog.orgId;
+    }
   }
 
   private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
     this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
     return pass;
   }
-  
+
   private async _combineStreamsInSequence(sources: PagingStream[], destination: PassThrough): Promise<void> {
     for (const stream of sources) {
       await new Promise((resolve, reject) => {
@@ -88,8 +146,16 @@ export class HubApiModel {
     destination.emit('end');
   }
 
+  private shouldFetchSite(searchRequestBody: IContentSearchRequest): boolean {
+    return searchRequestBody.options.site &&
+      (
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.group) ||
+        !this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)
+      );
+  }
+
   // TODO remove when koop-core no longer requires
-  getData () {}
+  getData() { }
 
   private preprocessSearchRequest(searchRequest: IContentSearchRequest): void {
     if (!searchRequest.filter) {
@@ -121,7 +187,6 @@ export class HubApiModel {
 
   private validateFields(searchRequest: IContentSearchRequest, validFields: string[]) {
     const invalidFields: string[] = [];
-
     for (const field of searchRequest.options.fields.split(',')) {
       if (!validFields.includes(field)) {
         invalidFields.push(field);
@@ -145,9 +210,21 @@ export class HubApiModel {
       portal: getPortalApiUrl(searchRequest.options.portal),
     };
 
-    const siteModel = await fetchSite(site, requestOptions);
+    const siteModel = await this.fetchHubSiteModel(site, requestOptions);
 
     return _.get(siteModel, 'data.catalog', {});
+  }
+
+  private async fetchHubSiteModel(hostname, opts) {
+    try {
+      return await fetchSiteModel(hostname, opts);
+    } catch (err) {
+      // Throw 404 if domain does not exist (first) or site is private (second)
+      if (err.message.includes(':: 404') || err.response?.error?.code === 403) {
+        throw new RemoteServerError(err.message, null, 404);
+      }
+      throw new RemoteServerError(err.message, null, 500);
+    }
   }
 
   private scopedFieldValueIsValid(val: string | string[] | IContentFieldFilter): boolean {

@@ -1,9 +1,9 @@
 import { IContentSearchRequest, searchDatasets } from "@esri/hub-search";
 import { PagingStream } from "../paging-stream";
-
-export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch?: number): PagingStream => {
+import { enrichDataset, HubSite } from "./enrich-dataset";
+export const getPagingStream = (searchRequest: IContentSearchRequest, hubSite: HubSite, pagesPerBatch?: number): PagingStream => {
   return new PagingStream({
-    firstPageParams: request,
+    firstPageParams: searchRequest,
 
     loadPage: (params: IContentSearchRequest | string) => {
       if (typeof params === 'string') {
@@ -14,7 +14,7 @@ export const getPagingStream = (request: IContentSearchRequest, pagesPerBatch?: 
       return searchDatasets(params); // first page request
     },
 
-    streamPage: (response, push) => response.data.forEach(result => push(result.attributes)),
+    streamPage: (response, push) => response.data.forEach(result => push(enrichDataset(result.attributes, hubSite))),
 
     getNextPageParams: response => response.meta?.next,
 
