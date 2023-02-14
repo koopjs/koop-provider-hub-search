@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## Unreleased
+## 3.0.0
 Added
 - Added additional data enrichments [#19](https://github.com/koopjs/koop-provider-hub-search/pull/19)
 - Transformed Hub dataset response to geoJSON [#20](https://github.com/koopjs/koop-provider-hub-search/pull/20)
