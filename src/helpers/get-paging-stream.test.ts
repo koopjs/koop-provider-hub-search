@@ -34,7 +34,9 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        portalUrl: 'portal.arcgis.com'
+        portalUrl: 'portal.arcgis.com',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub",
       }
 
       // Mock
@@ -95,8 +97,10 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        portalUrl: 'portal.arcgis.com'
-      }
+        portalUrl: 'portal.arcgis.com',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub",
+      };
 
       // Mock
       const mockedResponseOne: { data: DatasetResource[] } = {
@@ -194,8 +198,10 @@ describe('getPagingStream function', () => {
 
       const hubSite: HubSite = {
         siteUrl: 'arcgis.com',
-        portalUrl: 'portal.arcgis.com'
-      }
+        portalUrl: 'portal.arcgis.com',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub",
+      };
 
       const mockedResponseTwo: { data: DatasetResource[] } = {
         data: [

@@ -8,7 +8,9 @@ describe('enrichDataset function', () => {
 
     const hubsite: HubSite = {
         siteUrl: 'arcgis.com',
-        portalUrl: 'portal.arcgis.com'
+        portalUrl: 'portal.arcgis.com',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub"
     }
 
     it('should return geojson with enriched fields in properties field', async () => {
@@ -60,19 +62,26 @@ describe('enrichDataset function', () => {
             server: { spatialReference: { latestWkid: 3310, wkid: 3310 } },
             identifier: 'CALFIRE::DCAT_Test',
             slug: 'CALFIRE::DCAT_Test',
-            hubLandingPage: 'https://arcgis.com//maps/CALFIRE::DCAT_Test',
-            downloadLink: 'https://arcgis.com/CALFIRE::DCAT_Test',
+            ownerUri: 'qa.arcgis.com/sharing/rest/community/users/fpgis.CALFIRE?f=json',
+            language: '',
+            keyword: ['Uno', 'Dos', 'Tres'],
+            issuedDateTime: '2019-10-10T22:41:29.000Z',
+            orgTitle: 'QA Premium Alpha Hub',
+            provenance: '',
+            hubLandingPage: 'https://arcgis.com/maps/CALFIRE::DCAT_Test',
+            downloadLink: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test',
             agoLandingPage: 'portal.arcgis.com/home/item.html?id=0&sublayer=0',
-            license: '',
-            isProxiedCSV: false,
             isLayer: true,
-            accessUrlCSV: "https://arcgis.com/CALFIRE::DCAT_Test.csv?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D",
-            accessUrlGeoJSON: 'https://arcgis.com/CALFIRE::DCAT_Test.geojson?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
-            accessUrlKML: 'https://arcgis.com/CALFIRE::DCAT_Test.kml?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
-            accessUrlShapeFile: 'https://arcgis.com/CALFIRE::DCAT_Test.zip?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D'
+            license: '',
+            accessUrlGeoJSON: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.geojson?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlCSV: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.csv?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlKML: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.kml?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlShapeFile: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.zip?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D'
         }
+
         const enrichedDataset = enrichDataset(hubDataset, hubsite);
         expect(enrichedDataset.properties).toBeDefined();
+
         expect(enrichedDataset.properties).toStrictEqual(expectedEnrichedProperties);
     })
 
@@ -191,7 +200,8 @@ describe('enrichDataset function', () => {
     it('gets WFS and WMS access url if supported', () => {
         const hubDataset = {
             id: 'foo', // non-layer id
-            url: 'https://servicesqa.arcgis.com/Xj56SBi2udA78cC9/arcgis/rest/services/Tahoe_Things/FeatureServer/0'
+            url: 'https://servicesqa.arcgis.com/Xj56SBi2udA78cC9/arcgis/rest/services/Tahoe_Things/FeatureServer/0',
+            created: 1570747289000
         };
 
         const enrichedDatasetWithWFS = enrichDataset({ ...hubDataset, supportedExtensions: 'WFSServer' }, hubsite);
@@ -214,13 +224,169 @@ describe('enrichDataset function', () => {
             access: 'public',
             slug: 'nissan::skyline-gtr',
             size: 1,
-            type: 'CSV'
+            type: 'CSV',
+            created: 1570747289000
         };
 
         const { properties } = enrichDataset(hubDataset, hubsite);
-        expect(properties.accessUrlCSV).toBe('https://arcgis.com/nissan::skyline-gtr.csv');
-        expect(properties.isProxiedCSV).toBe(true);
+        expect(properties.accessUrlCSV).toBe('https://arcgis.com/datasets/nissan::skyline-gtr.csv');
 
+    });
+
+    it('should alpha2 To Alpha3 language', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            culture: 'sn-sv'
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.language).toBe('sna');
+    });
+
+    it('should set license field as null if dataset license is not set', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'none'
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.license).toBe(null);
+    });
+
+    it('should generate WFS distribution url if supported', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'none',
+            supportedExtensions: ['WFSServer'],
+            url: 'https://sampleserver3.arcgisonline.com/arcgis/rest/services/Earthquakes/RecentEarthquakesRendered/MapServer/0',
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.accessUrlWFS).toBe('https://sampleserver3.arcgisonline.com/arcgis/services/Earthquakes/RecentEarthquakesRendered/MapServer/WFSServer?request=GetCapabilities&service=WFS');
+    });
+
+    it('should generate WMS distribution url if supported', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'none',
+            supportedExtensions: ['WMSServer'],
+            url: 'https://sampleserver3.arcgisonline.com/arcgis/rest/services/Earthquakes/RecentEarthquakesRendered/MapServer/0',
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.accessUrlWMS).toBe('https://sampleserver3.arcgisonline.com/arcgis/services/Earthquakes/RecentEarthquakesRendered/MapServer/WMSServer?request=GetCapabilities&service=WMS');
+    });
+
+
+
+    it('should generate download link without query string if wkid is not present in spatialReference', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'none',
+            url: 'https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/DCAT_Test/FeatureServer/0',
+            layer: {
+                geometryType: 'esriGeometryPolygon',
+            },
+            server: {
+                spatialReference: {
+                    latestWkid: 3310,
+                },
+            },
+            identifier: 'CALFIRE::DCAT_Test',
+            supportedExtensions: ['WMSServer']
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.accessUrlWMS).toBe('https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/services/DCAT_Test/FeatureServer/WMSServer?request=GetCapabilities&service=WMS');
+    });
+    
+
+    it('should generate download link without query string if wkid is not present in spatialReference', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'none',
+            url: 'https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/rest/services/DCAT_Test/FeatureServer/0',
+            layer: {
+                geometryType: 'esriGeometryPolygon',
+            },
+            server: {
+                spatialReference: {
+                    latestWkid: 3310,
+                },
+            },
+            identifier: 'CALFIRE::DCAT_Test',
+            supportedExtensions: ['WMSServer'],
+            boundary: {
+                geometry: {
+                    type: 'sd'
+                }
+            }
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.accessUrlWMS).toBe('https://services1.arcgis.com/jUJYIo9tSA7EHvfZ/arcgis/services/DCAT_Test/FeatureServer/WMSServer?request=GetCapabilities&service=WMS');
+    });
+
+    it('should return structuredLicense url if dataset contains uninterpolated string', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: '{{customLicense}}',
+            structuredLicense: { url: 'arcgis.com' }
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.license).toBe('arcgis.com');
+    });
+
+    it('should return custom license if avaiable', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            license: 'customLicense',
+            url: 'arcgis.com'
+        };
+
+        const { properties } = enrichDataset(hubDataset, hubsite);
+        expect(properties.license).toBe('customLicense');
     });
 
     it('should get csv access url if dataset is a proxied csv', () => {
@@ -229,12 +395,38 @@ describe('enrichDataset function', () => {
             access: 'public',
             slug: 'nissan::skyline-gtr',
             size: 1,
-            type: 'CSV'
+            type: 'CSV',
+            created: 1570747289000
+        };
+
+        const { properties } = enrichDataset(hubDataset,
+            { siteUrl: 'https://arcgis.com', portalUrl: 'https://arcgis.portal.com', orgBaseUrl: 'qa.arcgis.com', orgTitle: "QA Premium Alpha Hub" });
+        expect(properties.hubLandingPage).toBe('https://arcgis.com/datasets/nissan::skyline-gtr');
+        expect(properties.downloadLink).toBe('https://arcgis.com/datasets/nissan::skyline-gtr');
+
+    });
+
+    it('should retrieve keywords from metadata if available', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            slug: 'nissan::skyline-gtr',
+            size: 1,
+            type: 'CSV',
+            created: 1570747289000,
+            metadata: {
+                metadata: {
+                    dataIdInfo: {
+                        searchKeys: {
+                            keyword: ['meta_keywords']
+                        }
+                    }
+                }
+            }
         };
 
         const { properties } = enrichDataset(hubDataset, hubsite);
-        expect(properties.accessUrlCSV).toBe('https://arcgis.com/nissan::skyline-gtr.csv');
-        expect(properties.isProxiedCSV).toBe(true);
+        expect(properties.keyword).toStrictEqual(['meta_keywords']);
 
     });
 
@@ -244,12 +436,14 @@ describe('enrichDataset function', () => {
             access: 'public',
             slug: 'nissan::skyline-gtr',
             size: 1,
-            type: 'CSV'
+            type: 'CSV',
+            created: 1570747289000
         };
 
-        const { properties } = enrichDataset(hubDataset, { siteUrl: 'arcgis.com', portalUrl: 'portal.com' });
-        expect(properties.hubLandingPage).toBe('https://arcgis.com//datasets/nissan::skyline-gtr')
-        expect(properties.downloadLink).toBe('https://arcgis.com/nissan::skyline-gtr')
+        const { properties } = enrichDataset(hubDataset,
+            { siteUrl: 'arcgis.com', portalUrl: 'portal.com', orgBaseUrl: 'qa.arcgis.com', orgTitle: "QA Premium Alpha Hub" });
+        expect(properties.hubLandingPage).toBe('https://arcgis.com/datasets/nissan::skyline-gtr')
+        expect(properties.downloadLink).toBe('https://arcgis.com/datasets/nissan::skyline-gtr')
 
     });
 
@@ -298,19 +492,20 @@ describe('enrichDataset function', () => {
             identifier: 'CALFIRE::DCAT_Test',
             slug: 'CALFIRE::DCAT_Test'
         };
-        const geojson = enrichDataset(hubDataset, { siteUrl: 'arcgis.com', portalUrl: 'portal.com' });
+        const geojson = enrichDataset(hubDataset,
+            { siteUrl: 'arcgis.com', portalUrl: 'portal.com', orgBaseUrl: 'qa.arcgis.com', orgTitle: "QA Premium Alpha Hub" });
 
         expect(geojson.geometry).toBeDefined();
         expect(geojson.geometry.type).toBe('Polygon');
         expect(geojson.geometry.coordinates).toStrictEqual([
             [
-              [ -77.10272947561813, 38.972065644420645 ],
-              [ -77.10272947561813, 38.874986889968675 ],
-              [ -76.92659446846153, 38.874986889968675 ],
-              [ -76.92659446846153, 38.972065644420645 ],
-              [ -77.10272947561813, 38.972065644420645 ]
+                [-77.10272947561813, 38.972065644420645],
+                [-77.10272947561813, 38.874986889968675],
+                [-76.92659446846153, 38.874986889968675],
+                [-76.92659446846153, 38.972065644420645],
+                [-77.10272947561813, 38.972065644420645]
             ]
-          ]
+        ]
         );
         expect(geojson.type).toBe('Feature');
         expect(geojson.properties).toBeDefined();

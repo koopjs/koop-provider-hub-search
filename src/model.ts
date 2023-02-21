@@ -7,31 +7,10 @@ import { IContentFieldFilter, IContentSearchRequest } from '@esri/hub-search';
 import { PassThrough } from 'stream';
 import { PagingStream } from './paging-stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
-import { fetchSiteModel, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError } from '@esri/hub-common';
-
-const REQUIRED_FIELDS = [
-  'id', // used for the dataset landing page URL
-  'type', // used for the dataset landing page URL
-  'slug', // used for the dataset landing page URL
-  'access', // used for detecting proxied csv's
-  'size', // used for detecting proxied csv's
-  'licenseInfo', // required for license resolution
-  'structuredLicense', // required for license resolution
-];
-
-// additional fields due to dataset enrichment
-const ADDON_FIELDS = [
-  'hubLandingPage',
-  'accessUrlCSV',
-  'isLayer',
-  'accessUrlKML',
-  'accessUrlShapeFile',
-  'accessUrlWFS',
-  'accessUrlWMS',
-  'accessUrlGeoJSON',
-  'license',
-  'agoLandingPage'
-];
+import {
+  fetchSiteModel, getHubApiUrl, getPortalApiUrl, hubApiRequest, IModel, RemoteServerError, lookupDomain, IDomainEntry
+} from '@esri/hub-common';
+import { REQUIRED_FIELDS, ADDON_FIELDS } from './helpers/fields';
 
 type HubApiRequest = {
   res?: {
@@ -51,7 +30,7 @@ export class HubApiModel {
 
   async getStream(request: Request) {
 
-    const { res: { locals: { searchRequestBody, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
+    const { res: { locals: { searchRequestBody, arcgisPortal, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
     this.preprocessSearchRequest(searchRequestBody);
 
     if (searchRequestBody.options.fields) {
@@ -70,10 +49,14 @@ export class HubApiModel {
     this.validateRequestScope(searchRequestBody);
 
     const searchRequestWithRequiredFields = this.addRequiredFields(searchRequestBody);
+    const domainRecord: IDomainEntry = await this.getDomainRecord(arcgisPortal, siteIdentifier);
 
     const pagingStreams: PagingStream[] = await getBatchedStreams({
       request: searchRequestWithRequiredFields,
       siteUrl: siteIdentifier,
+      portalUrl: arcgisPortal,
+      orgBaseUrl: this.getOrgBaseUrl(domainRecord, arcgisPortal),
+      orgTitle: domainRecord.orgTitle,
       limit
     });
 
@@ -131,7 +114,7 @@ export class HubApiModel {
   }
 
   private combineStreamsInSequence(streams: PagingStream[], pass: PassThrough): PassThrough {
-    this._combineStreamsInSequence(streams, pass).catch((err) => pass.destroy(err));
+    this._combineStreamsInSequence(streams, pass);
     return pass;
   }
 
@@ -152,6 +135,34 @@ export class HubApiModel {
         !this.scopedFieldValueIsValid(searchRequestBody.filter.group) ||
         !this.scopedFieldValueIsValid(searchRequestBody.filter.orgid)
       );
+  }
+
+  private async getDomainRecord(portalUrl: string, siteUrl: string): Promise<IDomainEntry> {
+    const requestOptions = {
+      isPortal: false,
+      hubApiUrl: getHubApiUrl(portalUrl),
+      portal: getPortalApiUrl(portalUrl),
+      authentication: null,
+    };
+
+    const domainRecord = (await lookupDomain(
+      siteUrl,
+      requestOptions,
+    )) as IDomainEntry;
+
+    return domainRecord;
+  }
+
+  private getOrgBaseUrl(domainRecord: IDomainEntry, portalUrl: string): string {
+    let env: 'prod' | 'qa' | 'dev' = 'prod';
+    if (/devext\.|mapsdev\./.test(portalUrl)) {
+      env = 'dev';
+    } else if (/qaext\.|mapsqa\./.test(portalUrl)) {
+      env = 'qa';
+    }
+
+    return `https://${domainRecord.orgKey}.maps${env === 'prod' ? '' : env
+      }.arcgis.com`;
   }
 
   // TODO remove when koop-core no longer requires
