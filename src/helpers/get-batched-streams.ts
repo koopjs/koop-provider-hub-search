@@ -8,12 +8,18 @@ import { getPagingStream } from './get-paging-stream';
 export type BatchSearch = {
   request: IContentSearchRequest,
   siteUrl: string,
+  portalUrl: string,
+  orgBaseUrl: string,
+  orgTitle: string,
   limit?: number | undefined
 }
 export const getBatchedStreams = async (batchSearchRequest: BatchSearch): Promise<PagingStream[]> => {
   const {
     request,
     siteUrl,
+    portalUrl,
+    orgBaseUrl,
+    orgTitle,
     limit
   }: BatchSearch = batchSearchRequest;
 
@@ -31,13 +37,15 @@ export const getBatchedStreams = async (batchSearchRequest: BatchSearch): Promis
   });
   return requests.map((batchRequest: IContentSearchRequest, i: number, requests: IContentSearchRequest[]) => {
     return getPagingStream(
-      batchRequest, 
+      batchRequest,
       {
-        siteUrl, 
-        portalUrl: batchRequest.options.portal
-      }, 
+        siteUrl,
+        portalUrl,
+        orgBaseUrl,
+        orgTitle
+      },
       getPagesPerBatch(limit, i, requests, pagesPerBatch)
-      );
+    );
   });
 };
 
