@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## 3.0.1
+Added
+- Added `ownerUri`, `language`, `issuedDateTime`, `orgTitle` and `provenance` data enrichments [#42](https://github.com/koopjs/koop-provider-hub-search/pull/42)
+
+Removed
+- Removed redundant `isProxiedCSV` data enrichment [#42](https://github.com/koopjs/koop-provider-hub-search/pull/42)
+
 ## 3.0.0
 Added
 - Added additional data enrichments [#19](https://github.com/koopjs/koop-provider-hub-search/pull/19)
