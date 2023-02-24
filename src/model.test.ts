@@ -7,13 +7,14 @@ import { IBooleanOperator, IContentSearchRequest, SortDirection } from "@esri/hu
 import { PassThrough, pipeline } from 'stream';
 import { getBatchedStreams } from './helpers/get-batched-streams';
 import { promisify } from 'util';
-import {  fetchSiteModel, hubApiRequest, RemoteServerError } from '@esri/hub-common';
+import { fetchSiteModel, hubApiRequest, lookupDomain, RemoteServerError } from '@esri/hub-common';
 
 jest.mock('@esri/hub-search');
 jest.mock('./helpers/get-batched-streams');
 jest.mock('@esri/hub-common', () => ({
   ...(jest.requireActual('@esri/hub-common') as object),
   hubApiRequest: jest.fn(),
+  lookupDomain: jest.fn(),
   fetchSiteModel: jest.fn()
 }));
 
@@ -21,11 +22,26 @@ describe('HubApiModel', () => {
   // this is just to make the type checker happy
   const mockGetBatchStreams = getBatchedStreams as unknown as jest.MockedFunction<typeof getBatchedStreams>;
   const mockHubApiRequest = hubApiRequest as unknown as jest.MockedFunction<typeof hubApiRequest>;
+  const mockLookupDomain = lookupDomain as unknown as jest.MockedFunction<typeof lookupDomain>;
   const mockFetchSite = fetchSiteModel as unknown as jest.MockedFunction<typeof fetchSiteModel>;
 
   beforeEach(() => {
     mockGetBatchStreams.mockReset();
     mockHubApiRequest.mockReset();
+    mockLookupDomain.mockResolvedValue({
+      "id": "374730",
+      "hostname": "download-test-qa-pre-a-hub.hubqa.arcgis.com",
+      "siteId": "6250d80d445740cc83e03a15d72229b5",
+      "clientKey": "lynU5vV3hIra11jA",
+      "orgKey": "qa-pre-a-hub",
+      "siteTitle": "download Sidebar",
+      "orgId": "Xj56SBi2udA78cC9",
+      "orgTitle": "QA Premium Alpha Hub",
+      "createdAt": "2021-02-12T00:23:44.798Z",
+      "updatedAt": "2021-02-26T16:16:13.300Z",
+      "sslOnly": true,
+      "permanentRedirect": false,
+    });
   });
 
   it('configures and returns a zipped concatenation of batched paging streams', async () => {
@@ -109,7 +125,17 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, { request: searchRequestBodyWithRequiredFields, limit: undefined, siteUrl: undefined });
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(
+        1,
+        {
+          request: searchRequestBodyWithRequiredFields,
+          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgTitle: "QA Premium Alpha Hub",
+          portalUrl: undefined,
+          limit: undefined,
+          siteUrl: undefined
+        }
+      );
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
@@ -133,7 +159,6 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
-
 
   it('combines streams sequentially in order if sort options are given', async () => {
     // Setup
@@ -217,7 +242,18 @@ describe('HubApiModel', () => {
       await pipe(stream, pass);
 
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
-      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, { request: searchRequestBodyWithRequiredFields, limit: undefined,   siteUrl: undefined });
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(
+        1,
+        {
+          request: searchRequestBodyWithRequiredFields,
+          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgTitle: "QA Premium Alpha Hub",
+          portalUrl: undefined,
+          limit: undefined,
+          siteUrl: undefined
+        }
+      );
+
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
       expect(actualResponses[0]).toEqual(mockedResponses[0][0][0]);
       expect(actualResponses[1]).toEqual(mockedResponses[0][0][1]);
@@ -241,7 +277,6 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
-
 
   it('returns batched streams based on the limit query', async () => {
     // Setup
@@ -422,8 +457,10 @@ describe('HubApiModel', () => {
             }
           },
           siteUrl: undefined,
-           
-          limit: undefined
+          limit: undefined,
+          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgTitle: "QA Premium Alpha Hub",
+          portalUrl: undefined
         }
       );
 
@@ -506,10 +543,139 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+  it('should generate orgBaseUrl if dev portal url is supplied', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequestBody,
+          arcgisPortal: 'https://devext.arcgis.com'
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        request: {
+          filter: {
+            terms,
+            id
+          },
+          options: {
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            portal: 'https://www.arcgis.com'
+          }
+        },
+        siteUrl: undefined,
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: 'https://devext.arcgis.com',
+        limit: undefined
+      });
+
+    } catch (err) {
+      fail(err);
+    }
+  });
+
+
+  it('should generate orgBaseUrl if qa portal url is supplied', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequestBody,
+          arcgisPortal: 'https://qaext.arcgis.com'
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        request: {
+          filter: {
+            terms,
+            id
+          },
+          options: {
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            portal: 'https://www.arcgis.com'
+          }
+        },
+        siteUrl: undefined,
+        orgBaseUrl: "https://qa-pre-a-hub.mapsqa.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: 'https://qaext.arcgis.com',
+        limit: undefined
+      });
+
     } catch (err) {
       fail(err);
     }
@@ -570,9 +736,12 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
+
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
     } catch (err) {
       fail(err);
@@ -633,7 +802,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -697,7 +868,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -747,6 +920,7 @@ describe('HubApiModel', () => {
 
       await pipe(stream, pass);
 
+
       expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
       expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
         request: {
@@ -760,7 +934,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -823,7 +999,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -831,6 +1009,159 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
+
+  it('should throw 400 error if fetchSiteModel fails because domain does not exist', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id: '12'
+      },
+      options: {
+        site: 'arcgis.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequestBody
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+    mockFetchSite.mockRejectedValue(new Error('Api Error :: 404'));
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('Api Error :: 404');
+      expect(err.status).toEqual(404);
+    }
+  });
+  
+
+  it('should throw 400 error if fetchSiteModel fails because site is private', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id: '12'
+      },
+      options: {
+        site: 'arcgis.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequestBody
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+    const err =  {
+      response: {
+        error: {
+          code: 403
+        }
+      },
+      message: 'error'
+    };
+    mockFetchSite.mockRejectedValue(err);
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.status).toEqual(404);
+    }
+  });
+
+  it('should throw 500 error if fetchSiteModel fails', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id: '12'
+      },
+      options: {
+        site: 'arcgis.com'
+      }
+    };
+    const req = {
+      res: {
+        locals: {
+          searchRequestBody
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+    mockFetchSite.mockRejectedValue(new Error('Api Error'));
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+
+      fail('should not reach here!');
+    } catch (err) {
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(0);
+      expect(err.message).toEqual('Api Error');
+      expect(err.status).toEqual(500);
+    }
+  });
+
+
 
   it('can handle a request with a valid orgid IContentFilter', async () => {
     // Setup
@@ -886,7 +1217,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -894,6 +1227,8 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
+
+
 
   it('throws error with an empty request', async () => {
     // Setup
@@ -1234,7 +1569,9 @@ describe('HubApiModel', () => {
           }
         },
         siteUrl: undefined,
-         
+        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: undefined,
         limit: undefined
       });
       expect(mockHubApiRequest).toHaveBeenCalledTimes(1);
@@ -1341,7 +1678,7 @@ describe('HubApiModel', () => {
       item: {} as any
     }
     mockFetchSite.mockImplementation(() => Promise.resolve(mockSiteModel));
-    
+
     mockHubApiRequest.mockImplementation(() => Promise.resolve(['name']));
     mockGetBatchStreams.mockImplementationOnce(() => Promise.resolve([]));
 
@@ -1368,6 +1705,9 @@ describe('HubApiModel', () => {
           portal: 'https://www.arcgis.com'
         }
       },
+      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgTitle: "QA Premium Alpha Hub",
+      portalUrl: undefined,
       siteUrl: undefined,
       limit: undefined
     });
@@ -1430,6 +1770,9 @@ describe('HubApiModel', () => {
           portal: 'https://www.arcgis.com'
         }
       },
+      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgTitle: "QA Premium Alpha Hub",
+      portalUrl: undefined,
       siteUrl: undefined,
       limit: undefined
     });
@@ -1490,6 +1833,9 @@ describe('HubApiModel', () => {
           portal: 'https://www.arcgis.com'
         }
       },
+      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgTitle: "QA Premium Alpha Hub",
+      portalUrl: undefined,
       siteUrl: undefined,
       limit: undefined
     });
@@ -1553,6 +1899,9 @@ describe('HubApiModel', () => {
           portal: 'https://www.arcgis.com'
         }
       },
+      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgTitle: "QA Premium Alpha Hub",
+      portalUrl: undefined,
       siteUrl: undefined,
       limit: undefined
     });
@@ -1654,6 +2003,8 @@ describe('HubApiModel', () => {
     }
   });
 
+  
+
   it('getData function does nothing', () => {
     // Setup
     const model = new HubApiModel();
@@ -1663,5 +2014,6 @@ describe('HubApiModel', () => {
 
     expect(data).toBeUndefined();
   });
+
 
 });

@@ -18,6 +18,7 @@
     "@types/node": "~14.14.45",
     "@typescript-eslint/eslint-plugin": "~4.28.2",
     "@typescript-eslint/parser": "~4.28.2",
+    "coverage-badges-cli": "^1.0.11",
     "eslint": "~7.30.0",
     "eslint-config-prettier": "~8.3.0",
     "eslint-plugin-jest": "~24.3.6",
@@ -40,9 +41,19 @@
     "release": "npm run build && npm publish ./build --access=public",
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "jest --coverage",
+    "test": "jest --coverage && coverage-badges --output ./coverage.svg",
     "test:watch": "jest --watch",
     "prepack": "cp ../README.md ../LICENSE ."
+  },
+  "jest": {
+    "collectCoverageFrom": [
+      "<rootDir>/packages/**/*.{tsx,ts}",
+      "!**/*.{js,d.ts}"
+    ],
+    "coverageReporters": [
+      "lcov",
+      "json-summary"
+    ]
   },
   "author": "Andrew Tate <atate@esri.com>",
   "license": "Apache-2.0",

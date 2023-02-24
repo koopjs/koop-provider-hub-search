@@ -24,7 +24,10 @@ describe('getBatchedStreams function', () => {
         filter: { terms: randTerms },
         options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
       },
-      siteUrl: 'arcgis.com'
+      siteUrl: 'arcgis.com',
+      portalUrl: 'portal.arcgis.com',
+      orgBaseUrl: 'qa.arcgis.com',
+      orgTitle: "QA Premium Alpha Hub"
     }
 
     // Mock
@@ -63,11 +66,16 @@ describe('getBatchedStreams function', () => {
         filter: { terms: randTerms },
         options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
       },
-      siteUrl: 'arcgis.com'
+      siteUrl: 'arcgis.com',
+      portalUrl: 'arcgis.com',
+      orgBaseUrl: 'qa.arcgis.com',
+      orgTitle: "QA Premium Alpha Hub"
     }
     const hubSite: HubSite = {
       siteUrl: batchSearch.siteUrl,
-      portalUrl: batchSearch.request.options?.portal  || ''
+      portalUrl: batchSearch.request.options?.portal || '',
+      orgBaseUrl: 'qa.arcgis.com',
+      orgTitle: "QA Premium Alpha Hub"
     }
 
     // Mock
@@ -88,13 +96,13 @@ describe('getBatchedStreams function', () => {
       expect(searchContentMock).toHaveBeenCalledTimes(1);
       expect(searchContentMock).toHaveBeenNthCalledWith(1, {
         filter: { terms: randTerms },
-        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=', portal: 'arcgis.com'  }
+        options: { page: 'eyJodWIiOnsic2l6ZSI6MH0sImFnbyI6eyJzaXplIjowfX0=', portal: 'arcgis.com' }
       });
       expect(getPagingStreamSpy).toHaveBeenCalledTimes(5);
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(1,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com'  }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' }
         },
         hubSite,
         2
@@ -102,7 +110,7 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(2,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
         hubSite,
         2
@@ -110,7 +118,7 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(3,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoyMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoyMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
         hubSite,
         2
@@ -118,7 +126,7 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(4,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
         hubSite,
         2
@@ -126,7 +134,7 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(5,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0Ijo0MDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'  }
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0Ijo0MDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
         hubSite,
         2
@@ -140,7 +148,7 @@ describe('getBatchedStreams function', () => {
   it('can properly generate streams based on limit if provided', async () => {
     // Setup
     const randTerms = faker.random.words();
-    
+
     // Test
     try {
       const limit: number = 523;
@@ -150,12 +158,17 @@ describe('getBatchedStreams function', () => {
           options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjoxfSwiYWdvIjp7InNpemUiOjAsInN0YXJ0IjoxfX0=', portal: 'arcgis.com' },
         },
         siteUrl: 'arcgis.com',
-        limit
+        limit,
+        portalUrl: 'arcgis.com',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub"
       }
 
       const hubSite: HubSite = {
         siteUrl: batchSearch.siteUrl,
-        portalUrl: batchSearch.request.options?.portal  || ''
+        portalUrl: batchSearch.request.options?.portal || '',
+        orgBaseUrl: 'qa.arcgis.com',
+        orgTitle: "QA Premium Alpha Hub"
       }
 
       const streams: PagingStream[] = await getBatchedStreams(batchSearch);
@@ -186,7 +199,7 @@ describe('getBatchedStreams function', () => {
       expect(getPagingStreamSpy).toHaveBeenNthCalledWith(3,
         {
           filter: { terms: randTerms },
-          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com'}
+          options: { page: 'eyJodWIiOnsic2l6ZSI6NTAsInN0YXJ0IjozMDF9LCJhZ28iOnsic2l6ZSI6MCwic3RhcnQiOjF9fQ==', portal: 'arcgis.com' }
         },
         hubSite,
         3
@@ -200,7 +213,7 @@ describe('getBatchedStreams function', () => {
         hubSite,
         1
       );
-      
+
       expect(streams).toHaveLength(4);
     } catch (err) {
       fail(err);

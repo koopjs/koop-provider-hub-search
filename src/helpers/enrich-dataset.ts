@@ -1,8 +1,18 @@
-import { IItem } from '@esri/arcgis-rest-portal';
-import { DatasetResource, datasetToItem, datasetToContent, getProxyUrl, IHubRequestOptions, parseDatasetId } from '@esri/hub-common';
+import { getUserUrl, IItem } from '@esri/arcgis-rest-portal';
+import {
+    DatasetResource,
+    datasetToItem,
+    datasetToContent,
+    getProxyUrl,
+    IHubRequestOptions,
+    parseDatasetId
+} from '@esri/hub-common';
 import { isPage } from '@esri/hub-sites';
 import * as geojsonRewind from 'geojson-rewind';
 import * as _ from 'lodash';
+import { UserSession } from '@esri/arcgis-rest-auth';
+import alpha2ToAlpha3Langs from './languages';
+
 const WFS_SERVER = 'WFSServer';
 const WMS_SERVER = 'WMSServer';
 type HubDataset = Record<string, any>;
@@ -18,6 +28,8 @@ type Feature = {
 export type HubSite = {
     siteUrl: string,
     portalUrl: string,
+    orgBaseUrl: string,
+    orgTitle: string
 };
 
 /**
@@ -40,24 +52,27 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
         id: dataset.id,
         attributes: dataset
     } as DatasetResource);
-
-    const { siteUrl, portalUrl }: HubSite = hubsite;
+    const { siteUrl, portalUrl, orgBaseUrl, orgTitle }: HubSite = hubsite;
     const { identifier, urls: { relative } } = content;
-
-    const additionalFields: Record<string, any> = {}; // container object for additional fields
-    additionalFields.hubLandingPage = concatUrlAndPath(siteUrl, relative);
-    additionalFields.downloadLink = concatUrlAndPath(siteUrl, identifier);
-
-    additionalFields.agoLandingPage = getAgoLandingPageUrl(dataset.id, portalUrl);
-    additionalFields.license = getDatasetLicense(dataset);
-
-    if (isPage(dataset as IItem) && !hasTags(dataset)) {
-        additionalFields.keyword = ['ArcGIS Hub page'];
-    }
+    const additionalFields: Record<string, any> = {
+        ownerUri: getUserUrl({
+            portal: `${orgBaseUrl}/sharing/rest`,
+            username: dataset.owner
+        } as UserSession) + '?f=json',
+        language: _.get(dataset, 'metadata.metadata.dataIdInfo.dataLang.languageCode.@_value') || localeToLang(dataset.culture) || '',
+        keyword: getDatasetKeyword(dataset),
+        issuedDateTime: _.get(dataset, 'metadata.metadata.dataIdInfo.idCitation.date.pubDate') || new Date(dataset.created).toISOString(),
+        orgTitle,
+        provenance: _.get(dataset, 'metadata.metadata.dataIdInfo.idCredit', ''),
+        hubLandingPage: concatUrlAndPath(siteUrl, relative.slice(1)),
+        downloadLink: concatUrlAndPath(siteUrl, `datasets/${identifier}`),
+        agoLandingPage: getAgoLandingPageUrl(dataset.id, portalUrl),
+        isLayer: isLayer(dataset),
+        license: getDatasetLicense(dataset)
+    };
 
     const downloadLinkFor: (type: string) => string = getDownloadLinkFn(additionalFields.downloadLink, dataset);
-    additionalFields.isProxiedCSV = isProxiedCSV(dataset);
-    additionalFields.isLayer = isLayer(dataset);
+
     if (isProxiedCSV(dataset)) {
         additionalFields.accessUrlCSV = downloadLinkFor('csv');
     }
@@ -85,8 +100,25 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
     });
 };
 
+function getDatasetKeyword(dataset: HubDataset): string[] {
+    const metaKeyword = _.get(dataset, 'metadata.metadata.dataIdInfo.searchKeys.keyword');
+
+    if (metaKeyword) {
+        return metaKeyword;
+    }
+
+    const { tags, type, typeKeywords } = dataset;
+    const hasNoTags = !tags || tags.length === 0 || !tags[0]; // if tags is undefined, the tags array is empty, or tags is an empty string
+
+    if (isPage({ type, typeKeywords } as IItem) && hasNoTags) {
+        return ['ArcGIS Hub page'];
+    }
+
+    return tags;
+}
+
 function hubDatasetToFeature(hubDataset: HubDataset): Feature {
-    const { type, rings } = hubDataset?.boundary?.geometry ?? {};
+    const { type, rings } = hubDataset.boundary?.geometry ?? {};
     // clockwise polygon rings rewind transformation 
     // is necesssary to follow right hand rule for valid geoJSON
     return geojsonRewind({
@@ -95,16 +127,15 @@ function hubDatasetToFeature(hubDataset: HubDataset): Feature {
             type: elasticToGeojsonType[type],
             coordinates: rings
         },
-        properties: objectWithoutKeys(hubDataset, ['boundary'])
+        properties: hubDataset && objectWithoutKeys(hubDataset, ['boundary'])
     }, false);
 }
 
-function hasTags(hubDataset: HubDataset) {
-    const maybeTags = hubDataset.tags;
-    return !!maybeTags && !(/{{.+}}/.test(maybeTags) || maybeTags.length === 0 || maybeTags[0] === '');
+function localeToLang(locale: string) {
+    return locale ? alpha2ToAlpha3Langs[locale.split('-')[0]] : '';
 }
 
-function isLayer(hubDataset: HubDataset) {
+function isLayer(hubDataset: HubDataset): boolean {
     return /_/.test(hubDataset.id);
 }
 
@@ -116,7 +147,7 @@ function concatUrlAndPath(siteUrl: string, path: string) {
     }
 }
 
-function getDatasetLicense(dataset: HubDataset) {
+function getDatasetLicense(dataset: HubDataset): string {
     const {
         structuredLicense: { url = null } = {},
         licenseInfo = ''
@@ -133,7 +164,7 @@ function getDatasetLicense(dataset: HubDataset) {
     return license;
 }
 
-function isProxiedCSV(hubDataset: HubDataset) {
+function isProxiedCSV(hubDataset: HubDataset): boolean {
     const item = datasetToItem({
         id: hubDataset.id,
         attributes: hubDataset
@@ -170,7 +201,7 @@ function getDownloadLinkFn(downloadLink: string, hubDataset: any) {
     return (ext: string) => `${downloadLink}.${ext}${queryStr}`;
 }
 
-function ogcUrl(datasetUrl: string, type: 'WMS' | 'WFS' = 'WMS') {
+function ogcUrl(datasetUrl: string, type: 'WMS' | 'WFS'): string {
     return datasetUrl.replace(/rest\/services/i, 'services').replace(/\d+$/, `${type}Server?request=GetCapabilities&service=${type}`);
 }
 
@@ -184,4 +215,3 @@ function objectWithoutKeys(obj, keys): Record<string, any> {
         return newObject;
     }, {});
 }
-
