@@ -13,6 +13,11 @@ import {
 import { REQUIRED_FIELDS, ADDON_FIELDS } from './helpers/fields';
 
 type HubApiRequest = {
+  app: {
+    locals: {
+      arcgisPortal?: string
+    }
+  }
   res?: {
     locals: {
       searchRequestBody?: IContentSearchRequest,
@@ -29,8 +34,11 @@ type HubApiRequest = {
 export class HubApiModel {
 
   async getStream(request: Request) {
-
-    const { res: { locals: { searchRequestBody, arcgisPortal, siteIdentifier } }, query: { limit } }: HubApiRequest = request;
+    const { 
+      app: { locals: { arcgisPortal } }, 
+      res: { locals: { searchRequestBody, siteIdentifier } }, 
+      query: { limit } 
+    }: HubApiRequest = request;
     this.preprocessSearchRequest(searchRequestBody);
 
     if (searchRequestBody.options.fields) {

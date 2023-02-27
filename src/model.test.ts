@@ -62,6 +62,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -71,7 +72,7 @@ describe('HubApiModel', () => {
     } as unknown as Request;
 
     const searchRequestBodyWithRequiredFields: IContentSearchRequest = _.cloneDeep(searchRequestBody);
-    if (searchRequestBodyWithRequiredFields.options) searchRequestBodyWithRequiredFields.options.fields = 'id,type,slug,access,size,licenseInfo,structuredLicense'
+    if (searchRequestBodyWithRequiredFields.options) searchRequestBodyWithRequiredFields.options.fields = 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary'
     // Mock
     const batches = 3;
     const pagesPerBatch = 2;
@@ -129,9 +130,9 @@ describe('HubApiModel', () => {
         1,
         {
           request: searchRequestBodyWithRequiredFields,
-          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
           orgTitle: "QA Premium Alpha Hub",
-          portalUrl: undefined,
+          portalUrl: "https://devext.arcgis.com",
           limit: undefined,
           siteUrl: undefined
         }
@@ -179,6 +180,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -227,7 +229,7 @@ describe('HubApiModel', () => {
     mockGetBatchStreams.mockResolvedValueOnce(mockedPagingStreams);
     mockHubApiRequest.mockResolvedValue(['id']);
     const searchRequestBodyWithRequiredFields: IContentSearchRequest = _.cloneDeep(searchRequestBody);
-    if (searchRequestBodyWithRequiredFields.options) searchRequestBodyWithRequiredFields.options.fields = 'id,type,slug,access,size,licenseInfo,structuredLicense'
+    if (searchRequestBodyWithRequiredFields.options) searchRequestBodyWithRequiredFields.options.fields = 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary'
 
     // Test and Assert
     try {
@@ -246,9 +248,9 @@ describe('HubApiModel', () => {
         1,
         {
           request: searchRequestBodyWithRequiredFields,
-          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
           orgTitle: "QA Premium Alpha Hub",
-          portalUrl: undefined,
+          portalUrl: "https://devext.arcgis.com",
           limit: undefined,
           siteUrl: undefined
         }
@@ -294,6 +296,7 @@ describe('HubApiModel', () => {
       },
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -382,6 +385,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -452,15 +456,15 @@ describe('HubApiModel', () => {
               id
             },
             options: {
-              fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+              fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
               portal: 'https://www.arcgis.com'
             }
           },
           siteUrl: undefined,
           limit: undefined,
-          orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+          orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
           orgTitle: "QA Premium Alpha Hub",
-          portalUrl: undefined
+          portalUrl: "https://devext.arcgis.com"
         }
       );
 
@@ -501,6 +505,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -538,14 +543,14 @@ describe('HubApiModel', () => {
             id
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -567,10 +572,10 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
-          searchRequestBody,
-          arcgisPortal: 'https://devext.arcgis.com'
+          searchRequestBody
         }
       },
       query: {}
@@ -601,7 +606,7 @@ describe('HubApiModel', () => {
             id
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
@@ -631,10 +636,10 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://qaext.arcgis.com' } }, 
       res: {
         locals: {
-          searchRequestBody,
-          arcgisPortal: 'https://qaext.arcgis.com'
+          searchRequestBody
         }
       },
       query: {}
@@ -665,7 +670,7 @@ describe('HubApiModel', () => {
             id
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
@@ -695,6 +700,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -731,14 +737,14 @@ describe('HubApiModel', () => {
             group
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
 
@@ -761,6 +767,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -797,14 +804,14 @@ describe('HubApiModel', () => {
             group: [group]
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -826,6 +833,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -863,14 +871,14 @@ describe('HubApiModel', () => {
             group: { bool: IBooleanOperator.AND, value: [group] }
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -892,6 +900,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -929,14 +938,14 @@ describe('HubApiModel', () => {
             orgid
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -958,6 +967,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -994,14 +1004,14 @@ describe('HubApiModel', () => {
             orgid: [orgid]
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -1025,6 +1035,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1074,6 +1085,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } },
       res: {
         locals: {
           searchRequestBody
@@ -1129,6 +1141,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1176,6 +1189,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1212,14 +1226,14 @@ describe('HubApiModel', () => {
             orgid: { bool: IBooleanOperator.AND, value: [orgid] }
           },
           options: {
-            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://www.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
@@ -1236,6 +1250,7 @@ describe('HubApiModel', () => {
 
     const searchRequestBody: IContentSearchRequest = {};
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1279,6 +1294,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1322,6 +1338,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1364,6 +1381,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1406,6 +1424,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } },
       res: {
         locals: {
           searchRequestBody
@@ -1449,6 +1468,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } },
       res: {
         locals: {
           searchRequestBody
@@ -1497,6 +1517,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1564,14 +1585,14 @@ describe('HubApiModel', () => {
             id
           },
           options: {
-            fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense',
+            fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
             portal: 'https://qaext.arcgis.com'
           }
         },
         siteUrl: undefined,
-        orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
         orgTitle: "QA Premium Alpha Hub",
-        portalUrl: undefined,
+        portalUrl: "https://devext.arcgis.com",
         limit: undefined
       });
       expect(mockHubApiRequest).toHaveBeenCalledTimes(1);
@@ -1616,6 +1637,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1656,6 +1678,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1700,14 +1723,14 @@ describe('HubApiModel', () => {
           orgid: '23456'
         },
         options: {
-          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense',
+          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
           site: 'opendata.de.com',
           portal: 'https://www.arcgis.com'
         }
       },
-      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
       orgTitle: "QA Premium Alpha Hub",
-      portalUrl: undefined,
+      portalUrl: "https://devext.arcgis.com",
       siteUrl: undefined,
       limit: undefined
     });
@@ -1730,6 +1753,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1765,14 +1789,14 @@ describe('HubApiModel', () => {
           orgid: '23456'
         },
         options: {
-          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense',
+          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
           site: 'opendata.de.com',
           portal: 'https://www.arcgis.com'
         }
       },
-      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
       orgTitle: "QA Premium Alpha Hub",
-      portalUrl: undefined,
+      portalUrl: 'https://devext.arcgis.com',
       siteUrl: undefined,
       limit: undefined
     });
@@ -1795,6 +1819,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1828,14 +1853,14 @@ describe('HubApiModel', () => {
           orgid: 'abcdef'
         },
         options: {
-          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense',
+          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
           site: 'opendata.de.com',
           portal: 'https://www.arcgis.com'
         }
       },
-      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
       orgTitle: "QA Premium Alpha Hub",
-      portalUrl: undefined,
+      portalUrl: "https://devext.arcgis.com",
       siteUrl: undefined,
       limit: undefined
     });
@@ -1860,6 +1885,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
@@ -1894,14 +1920,14 @@ describe('HubApiModel', () => {
           orgid: 'abcdef'
         },
         options: {
-          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense',
+          fields: 'name,id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
           site: 'opendata.de.com',
           portal: 'https://www.arcgis.com'
         }
       },
-      orgBaseUrl: "https://qa-pre-a-hub.maps.arcgis.com",
+      orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
       orgTitle: "QA Premium Alpha Hub",
-      portalUrl: undefined,
+      portalUrl: "https://devext.arcgis.com",
       siteUrl: undefined,
       limit: undefined
     });
@@ -1926,6 +1952,7 @@ describe('HubApiModel', () => {
       }
     };
     const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
       res: {
         locals: {
           searchRequestBody
