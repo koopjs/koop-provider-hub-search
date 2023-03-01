@@ -6,6 +6,7 @@ export const REQUIRED_FIELDS = [
   'size', // used for detecting proxied csv's
   'licenseInfo', // required for license resolution
   'structuredLicense', // required for license resolution
+  'boundary', // required for geojson
 ];
 
 // additional fields due to dataset enrichment
