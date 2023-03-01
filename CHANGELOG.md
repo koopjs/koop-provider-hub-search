@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## Unreleased
+Fixed
+- Retrieve `arcgisPortal` from `req.app.locals` [#43](https://github.com/koopjs/koop-provider-hub-search/pull/43)
+
 ## 3.0.1
 Added
 - Added `ownerUri`, `language`, `issuedDateTime`, `orgTitle` and `provenance` data enrichments [#42](https://github.com/koopjs/koop-provider-hub-search/pull/42)
