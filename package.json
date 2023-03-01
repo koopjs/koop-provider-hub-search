@@ -1,6 +1,6 @@
 {
   "name": "@koopjs/koop-provider-hub-search",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A Koop provider plugin to use the ArcGIS Hub Search API as a data source",
   "main": "src/index.js",
   "engines": {
