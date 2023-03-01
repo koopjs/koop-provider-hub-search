@@ -20,7 +20,7 @@ class Output {
       }
     };
 
-    req.res.locals.arcgisPortal = 'https://www.arcgis.com';
+    req.app.locals.arcgisPortal = 'https://www.arcgis.com';
     req.res.locals.siteIdentifier = 'opendata.dc.gov';
     
     const docStream = await this.model.pullStream(req);
