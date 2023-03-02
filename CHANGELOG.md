@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## Unreleased
+## 3.0.2
 Fixed
 - Retrieve `arcgisPortal` from `req.app.locals` [#43](https://github.com/koopjs/koop-provider-hub-search/pull/43)
 
