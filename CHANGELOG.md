@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 3.0.3
+Added
+- Added durable download links for CSV, GeoJSON and Shapefile file types [#45](https://github.com/koopjs/koop-provider-hub-search/pull/45)
+
 ## 3.0.2
 Fixed
 - Retrieve `arcgisPortal` from `req.app.locals` [#43](https://github.com/koopjs/koop-provider-hub-search/pull/43)
