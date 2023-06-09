@@ -31,7 +31,7 @@ export type HubSite = {
     orgBaseUrl: string,
     orgTitle: string
 };
-
+type FileType = 'shapefile' | 'csv' | 'geojson';
 /**
  * Mapping from ElasticSearch geo_shape type
  * to valid GeoJSON type  
@@ -79,10 +79,13 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
 
     if (isLayer(dataset)) {
         additionalFields.accessUrlGeoJSON = downloadLinkFor('geojson');
+        additionalFields.durableUrlGeoJSON = generateDurableDownloadUrl(dataset.id, siteUrl, 'geojson');
         additionalFields.accessUrlCSV = downloadLinkFor('csv');
+        additionalFields.durableUrlCSV = generateDurableDownloadUrl(dataset.id, siteUrl, 'csv');
         if (_.has(dataset, 'layer.geometryType')) {
             additionalFields.accessUrlKML = downloadLinkFor('kml');
             additionalFields.accessUrlShapeFile = downloadLinkFor('zip');
+            additionalFields.durableUrlShapeFile= generateDurableDownloadUrl(dataset.id, siteUrl, 'shapefile');
         }
     }
 
@@ -99,6 +102,11 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
         ...additionalFields
     });
 };
+
+function generateDurableDownloadUrl(datasetId: string, siteUrl: string, fileType: FileType) {
+    const { itemId, layerId } = parseDatasetId(datasetId);
+    return `https://${siteUrl}/api/download/v1/item/${itemId}/${fileType}?layers=${layerId}`;
+}
 
 function getDatasetKeyword(dataset: HubDataset): string[] {
     const metaKeyword = _.get(dataset, 'metadata.metadata.dataIdInfo.searchKeys.keyword');
