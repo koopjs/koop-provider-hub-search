@@ -31,7 +31,7 @@ export type HubSite = {
     orgBaseUrl: string,
     orgTitle: string
 };
-type FileType = 'shapefile' | 'csv' | 'geojson';
+type FileType = 'shapefile' | 'csv' | 'geojson' | 'kml';
 /**
  * Mapping from ElasticSearch geo_shape type
  * to valid GeoJSON type  
@@ -84,6 +84,7 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
         additionalFields.durableUrlCSV = generateDurableDownloadUrl(dataset.id, siteUrl, 'csv');
         if (_.has(dataset, 'layer.geometryType')) {
             additionalFields.accessUrlKML = downloadLinkFor('kml');
+            additionalFields.durableUrlKML = generateDurableDownloadUrl(dataset.id, siteUrl, 'kml');
             additionalFields.accessUrlShapeFile = downloadLinkFor('zip');
             additionalFields.durableUrlShapeFile= generateDurableDownloadUrl(dataset.id, siteUrl, 'shapefile');
         }
