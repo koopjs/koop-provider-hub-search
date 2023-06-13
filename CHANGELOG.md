@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 3.0.4
+Added
+- Added durable download links for CSV file type [#46](https://github.com/koopjs/koop-provider-hub-search/pull/46)
+
 ## 3.0.3
 Added
 - Added durable download links for CSV, GeoJSON and Shapefile file types [#45](https://github.com/koopjs/koop-provider-hub-search/pull/45)
