@@ -73,6 +73,7 @@ describe('enrichDataset function', () => {
             durableUrlCSV: 'https://arcgis.com/api/download/v1/item/123a/csv?layers=0',
             durableUrlGeoJSON: 'https://arcgis.com/api/download/v1/item/123a/geojson?layers=0',
             durableUrlShapeFile: 'https://arcgis.com/api/download/v1/item/123a/shapefile?layers=0',
+            durableUrlKML: 'https://arcgis.com/api/download/v1/item/123a/kml?layers=0',
             agoLandingPage: 'portal.arcgis.com/home/item.html?id=123a&sublayer=0',
             isLayer: true,
             license: '',
