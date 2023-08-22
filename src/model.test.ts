@@ -559,6 +559,81 @@ describe('HubApiModel', () => {
     }
   });
 
+  it('can handle 0 batches when sort fields are applied', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
+      },
+      options: {
+        portal: 'https://qaext.arcgis.com',
+        sortField: 'Date Created|created|modified',
+        sortOrder: SortDirection.asc
+      }
+    };
+    const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
+      res: {
+        locals: {
+          searchRequestBody
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+    // Mock
+    const batches = 0;
+    const pagesPerBatch = 0;
+    const resultsPerPage = 0;
+
+    mockGetBatchStreams.mockImplementationOnce(() => {
+      return Promise.resolve([]);
+    });
+    mockHubApiRequest.mockResolvedValue(['id']);
+
+    try {
+      const actualResponses = [];
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+      expect(mockGetBatchStreams).toHaveBeenNthCalledWith(1, {
+        request: {
+          filter: {
+            terms,
+            id
+          },
+          options: {
+            fields: 'id,type,slug,access,size,licenseInfo,structuredLicense,boundary',
+            portal: 'https://qaext.arcgis.com',
+            sortField: 'Date Created|created|modified',
+            sortOrder: SortDirection.asc
+          }
+        },
+        siteUrl: undefined,
+        orgBaseUrl: "https://qa-pre-a-hub.mapsdev.arcgis.com",
+        orgTitle: "QA Premium Alpha Hub",
+        portalUrl: "https://devext.arcgis.com",
+        limit: undefined
+      });
+      expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
+    } catch (err) {
+      console.error(err);
+      fail(err);
+    }
+  });
+
   it('should generate orgBaseUrl if dev portal url is supplied', async () => {
     // Setup
     const terms = faker.random.words();
