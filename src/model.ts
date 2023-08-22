@@ -127,6 +127,11 @@ export class HubApiModel {
   }
 
   private async _combineStreamsInSequence(sources: PagingStream[], destination: PassThrough): Promise<void> {
+    if (!sources.length) {
+      destination.end(() => { });
+      return;
+    }
+
     for (const stream of sources) {
       await new Promise((resolve, reject) => {
         stream.pipe(destination, { end: false });
