@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 3.0.5
+Fixed
+- Timeout issue when sort filter is applied [#46](https://github.com/koopjs/koop-provider-hub-search/pull/51)
+
 ## 3.0.4
 Added
 - Added durable download links for CSV file type [#46](https://github.com/koopjs/koop-provider-hub-search/pull/46)
