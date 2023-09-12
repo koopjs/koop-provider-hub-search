@@ -196,14 +196,14 @@ function getAgoLandingPageUrl(datasetId: string, portalUrl: string) {
 function getDownloadLinkFn(downloadLink: string, hubDataset: any) {
     const spatialReference = _.get(hubDataset, 'server.spatialReference');
 
-    let queryStr = '';
+    let queryStr = '?where=1=1'; // default query param to get up to date file
 
     if (spatialReference) {
         const { latestWkid, wkid } = spatialReference;
 
         if (wkid) {
             const outSR = JSON.stringify({ latestWkid, wkid });
-            queryStr = `?outSR=${encodeURIComponent(outSR)}`;
+            queryStr = `${queryStr}&outSR=${encodeURIComponent(outSR)}`;
         }
     }
 
