@@ -77,10 +77,10 @@ describe('enrichDataset function', () => {
             agoLandingPage: 'portal.arcgis.com/home/item.html?id=123a&sublayer=0',
             isLayer: true,
             license: '',
-            accessUrlGeoJSON: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.geojson?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
-            accessUrlCSV: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.csv?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
-            accessUrlKML: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.kml?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
-            accessUrlShapeFile: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.zip?outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D'
+            accessUrlGeoJSON: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.geojson?where=1=1&outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlCSV: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.csv?where=1=1&outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlKML: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.kml?where=1=1&outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D',
+            accessUrlShapeFile: 'https://arcgis.com/datasets/CALFIRE::DCAT_Test.zip?where=1=1&outSR=%7B%22latestWkid%22%3A3310%2C%22wkid%22%3A3310%7D'
         }
 
         const enrichedDataset = enrichDataset(hubDataset, hubsite);
@@ -233,7 +233,7 @@ describe('enrichDataset function', () => {
         };
 
         const { properties } = enrichDataset(hubDataset, hubsite);
-        expect(properties.accessUrlCSV).toBe('https://arcgis.com/datasets/nissan::skyline-gtr.csv');
+        expect(properties.accessUrlCSV).toBe('https://arcgis.com/datasets/nissan::skyline-gtr.csv?where=1=1');
 
     });
 
