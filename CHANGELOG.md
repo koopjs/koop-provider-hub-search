@@ -1,8 +1,12 @@
 # CHANGELOG.md
 
+## 3.0.6
+Fixed
+- Added default `where` query parameter in accessURL [#53](https://github.com/koopjs/koop-provider-hub-search/pull/53)
+
 ## 3.0.5
 Fixed
-- Timeout issue when sort filter is applied [#46](https://github.com/koopjs/koop-provider-hub-search/pull/51)
+- Timeout issue when sort filter is applied [#51](https://github.com/koopjs/koop-provider-hub-search/pull/51)
 
 ## 3.0.4
 Added
