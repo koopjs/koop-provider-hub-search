@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 3.0.8
+Fixed
+- Bumped `minimist` version to 1.2.8 which fixes security vulnerability [CVE-2021-44906](https://github.com/advisories/GHSA-xvch-5gv4-984h) [#55](https://github.com/koopjs/koop-provider-hub-search/pull/55)
+
 ## 3.0.7
 Fixed
 - Bumped `minimist` version to 1.2.8 which fixes security vulnerability [CVE-2021-44906](https://github.com/advisories/GHSA-xvch-5gv4-984h) [#55](https://github.com/koopjs/koop-provider-hub-search/pull/55)
