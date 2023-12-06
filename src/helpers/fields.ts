@@ -27,5 +27,9 @@ export const ADDON_FIELDS = [
   'issuedDateTime',
   'orgTitle',
   'provenance',
-  'downloadLink'
+  'downloadLink',
+  'durableUrlCSV', 
+  'durableUrlGeoJSON', 
+  'durableUrlShapeFile', 
+  'durableUrlKML'
 ];
