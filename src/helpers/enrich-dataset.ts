@@ -106,7 +106,7 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
 
 function generateDurableDownloadUrl(datasetId: string, siteUrl: string, fileType: FileType) {
     const { itemId, layerId } = parseDatasetId(datasetId);
-    return `https://${siteUrl}/api/download/v1/item/${itemId}/${fileType}?layers=${layerId}`;
+    return `https://${siteUrl}/api/download/v1/items/${itemId}/${fileType}?layers=${layerId}`;
 }
 
 function getDatasetKeyword(dataset: HubDataset): string[] {
