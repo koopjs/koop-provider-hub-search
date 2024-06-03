@@ -46,8 +46,7 @@ export class PagingStream extends Readable {
       if (!this._nextPageParams || this._currPage >= this._pageLimit) {
         this.push(null);
       }
-    }
-    catch (err) {
+    } catch (err) {
       this.destroy(err);
       return;
     }
