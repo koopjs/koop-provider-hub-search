@@ -32,22 +32,24 @@ export class PagingStream extends Readable {
     this._pageLimit = pageLimit;
   }
 
-  async _read () {
-    let response: any;
+  async _read() {
     try {
+      let response: any;
+
       response = await this._loadPage(this._nextPageParams);
       this._currPage++;
-    } catch (err) {
+
+      this._nextPageParams = this._getNextPageParams(response);
+
+      this._streamPage(response, this.push.bind(this));
+
+      if (!this._nextPageParams || this._currPage >= this._pageLimit) {
+        this.push(null);
+      }
+    }
+    catch (err) {
       this.destroy(err);
       return;
-    }
-
-    this._nextPageParams = this._getNextPageParams(response);
-
-    this._streamPage(response, this.push.bind(this));
-
-    if (!this._nextPageParams || this._currPage >= this._pageLimit) {
-      this.push(null);
     }
   }
 }

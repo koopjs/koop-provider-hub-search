@@ -61,7 +61,7 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
         } as UserSession) + '?f=json',
         language: _.get(dataset, 'metadata.metadata.dataIdInfo.dataLang.languageCode.@_value') || localeToLang(dataset.culture) || '',
         keyword: getDatasetKeyword(dataset),
-        issuedDateTime: _.get(dataset, 'metadata.metadata.dataIdInfo.idCitation.date.pubDate') || new Date(dataset.created).toISOString(),
+        issuedDateTime: _.get(dataset, 'metadata.metadata.dataIdInfo.idCitation.date.pubDate') || timestampToIsoDate(dataset.created),
         orgTitle,
         provenance: _.get(dataset, 'metadata.metadata.dataIdInfo.idCredit', ''),
         hubLandingPage: concatUrlAndPath(siteUrl, relative.slice(1)),
@@ -86,7 +86,7 @@ export function enrichDataset(dataset: HubDataset, hubsite: HubSite): Feature {
             additionalFields.accessUrlKML = downloadLinkFor('kml');
             additionalFields.durableUrlKML = generateDurableDownloadUrl(dataset.id, siteUrl, 'kml');
             additionalFields.accessUrlShapeFile = downloadLinkFor('zip');
-            additionalFields.durableUrlShapeFile= generateDurableDownloadUrl(dataset.id, siteUrl, 'shapefile');
+            additionalFields.durableUrlShapeFile = generateDurableDownloadUrl(dataset.id, siteUrl, 'shapefile');
         }
     }
 
@@ -223,4 +223,14 @@ function objectWithoutKeys(obj, keys): Record<string, any> {
         if (keys.indexOf(key) === -1) newObject[key] = obj[key];
         return newObject;
     }, {});
+}
+
+function timestampToIsoDate (val: number): string {
+    if (_.isNil(val)) return undefined;
+
+    const date = new Date(val);
+    if (date instanceof Date && !isNaN(date.valueOf())) {
+        return new Date(val).toISOString();
+    } 
+    return undefined;
 }
