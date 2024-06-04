@@ -230,7 +230,7 @@ function timestampToIsoDate (val: number): string {
 
     const date = new Date(val);
     if (date instanceof Date && !isNaN(date.valueOf())) {
-        return new Date(val).toISOString();
+        return date.toISOString();
     } 
     return undefined;
 }
