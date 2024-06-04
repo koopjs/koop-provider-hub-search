@@ -137,7 +137,7 @@ export class HubApiModel {
         stream.pipe(destination, { end: false });
         stream.on('end', resolve);
         stream.on('error', (err) => {
-          destination.emit('error', err)
+          destination.emit('error', err);
         });
       });
     }

@@ -34,9 +34,7 @@ export class PagingStream extends Readable {
 
   async _read() {
     try {
-      let response: any;
-
-      response = await this._loadPage(this._nextPageParams);
+      const response = await this._loadPage(this._nextPageParams);
       this._currPage++;
 
       this._nextPageParams = this._getNextPageParams(response);
