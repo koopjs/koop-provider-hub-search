@@ -515,4 +515,34 @@ describe('enrichDataset function', () => {
         expect(geojson.properties).toBeDefined();
         expect(geojsonValidation.isFeature(geojson)).toBe(true);
     });
+
+    it('should set issuedDateTime as undefined if hub dataset created field is undefined', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            size: 1,
+            type: 'CSV',
+            created: undefined
+        };
+
+        const { properties } = enrichDataset(hubDataset,
+            { siteUrl: 'arcgis.com', portalUrl: 'portal.com', orgBaseUrl: 'qa.arcgis.com', orgTitle: "QA Premium Alpha Hub" });
+        expect(properties).toBeDefined()
+        expect(properties.issuedDateTime).toBeUndefined()
+    });
+
+    it('should set issuedDateTime as undefined if hub dataset created field contains invalid value', () => {
+        const hubDataset = {
+            id: 'foo',
+            access: 'public',
+            size: 1,
+            type: 'CSV',
+            created: 'invalid-string'
+        };
+
+        const { properties } = enrichDataset(hubDataset,
+            { siteUrl: 'arcgis.com', portalUrl: 'portal.com', orgBaseUrl: 'qa.arcgis.com', orgTitle: "QA Premium Alpha Hub" });
+        expect(properties).toBeDefined()
+        expect(properties.issuedDateTime).toBeUndefined()
+    });
 }) 

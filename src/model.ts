@@ -133,10 +133,12 @@ export class HubApiModel {
     }
 
     for (const stream of sources) {
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         stream.pipe(destination, { end: false });
         stream.on('end', resolve);
-        stream.on('error', reject);
+        stream.on('error', (err) => {
+          destination.emit('error', err);
+        });
       });
     }
     destination.emit('end');

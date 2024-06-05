@@ -697,7 +697,6 @@ describe('HubApiModel', () => {
     }
   });
 
-
   it('should generate orgBaseUrl if qa portal url is supplied', async () => {
     // Setup
     const terms = faker.random.words();
@@ -760,7 +759,6 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
-
 
   it('can handle a request with a valid group', async () => {
     // Setup
@@ -1143,7 +1141,6 @@ describe('HubApiModel', () => {
       expect(err.status).toEqual(404);
     }
   });
-  
 
   it('should throw 400 error if fetchSiteModel fails because site is private', async () => {
     // Setup
@@ -1249,8 +1246,6 @@ describe('HubApiModel', () => {
     }
   });
 
-
-
   it('can handle a request with a valid orgid IContentFilter', async () => {
     // Setup
     const terms = faker.random.words();
@@ -1316,8 +1311,6 @@ describe('HubApiModel', () => {
       fail(err);
     }
   });
-
-
 
   it('throws error with an empty request', async () => {
     // Setup
@@ -1942,7 +1935,6 @@ describe('HubApiModel', () => {
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
-
   it('does not fetch the provided site\'s catalog if group and orgid are explicitly provided', async () => {
     // Setup
     const terms = faker.random.words()
@@ -2009,9 +2001,7 @@ describe('HubApiModel', () => {
     expect(actualResponses).toHaveLength(batches * pagesPerBatch * resultsPerPage);
   });
 
-
-
-  it('stops streaming and throws error if underlying paging stream throws error', async () => {
+  it('stops non-sequential stream and throws error if underlying paging stream throws error', async () => {
     // Setup
     const terms = faker.random.words();
     const id = faker.datatype.uuid();
@@ -2105,8 +2095,6 @@ describe('HubApiModel', () => {
     }
   });
 
-  
-
   it('getData function does nothing', () => {
     // Setup
     const model = new HubApiModel();
@@ -2117,5 +2105,95 @@ describe('HubApiModel', () => {
     expect(data).toBeUndefined();
   });
 
+  it('stops sequential stream and emits error if underlying paging stream throws error', async () => {
+    // Setup
+    const terms = faker.random.words();
+    const id = faker.datatype.uuid();
+    const model = new HubApiModel();
+
+    const searchRequestBody: IContentSearchRequest = {
+      filter: {
+        terms,
+        id
+      },
+      options: {
+        portal: 'https://qaext.arcgis.com',
+        sortField: 'Date Created|created|modified',
+      }
+    };
+    const req = {
+      app: { locals: { arcgisPortal: 'https://devext.arcgis.com' } }, 
+      res: {
+        locals: {
+          searchRequestBody
+        }
+      },
+      query: {}
+    } as unknown as Request;
+
+    // Mock
+    const batches = 3;
+    const pagesPerBatch = 2;
+    const resultsPerPage = 3
+
+    const mockedResponses = new Array(batches).fill(null).map(() => {
+      return new Array(pagesPerBatch).fill(null).map(() => {
+        return new Array(resultsPerPage).fill(null).map(() => ({
+          id: faker.datatype.uuid()
+        }));
+      });
+    });
+
+    const mockedPagingStreams = mockedResponses.map((batchPages: any[], index: number) => {
+      let currPage = 0;
+      return new PagingStream({
+        firstPageParams: {},
+        getNextPageParams: () => {
+          if (currPage >= batchPages.length) {
+            return null
+          } else {
+            return () => batchPages[currPage++];
+          }
+        },
+        loadPage: async (params) => {
+          if (index === 0 && currPage === 0) {
+            throw new Error('Error fetching data!')
+          } else if (typeof params === 'function') {
+            return params()
+          } else {
+            return batchPages[currPage++]
+          }
+        },
+        streamPage: (response, push) => {
+          response.forEach(result => push(result));
+        }
+      })
+    });
+
+    mockGetBatchStreams.mockResolvedValueOnce(mockedPagingStreams);
+
+    const actualResponses = [];
+
+    // Test and Assert
+    try {
+      const stream = await model.getStream(req);
+      const pass = new PassThrough({ objectMode: true });
+      pass.on('data', data => {
+        actualResponses.push(data);
+      });
+
+      pass.on('error', err => {
+        expect(err.message).toEqual('Error fetching data!');
+      });
+      const pipe = promisify(pipeline);
+
+      await pipe(stream, pass);
+      
+      fail('Should never reach here')
+    } catch (err) {
+      expect(err.message).toEqual('Error fetching data!');
+      expect(mockGetBatchStreams).toHaveBeenCalledTimes(1);
+    }
+  });
 
 });

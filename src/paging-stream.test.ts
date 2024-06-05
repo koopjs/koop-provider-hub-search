@@ -181,7 +181,7 @@ describe('paging stream', () => {
     }));
   });
 
-  it('destroys stream if error occurs', () => {
+  it('destroys stream if error occurs when loading a page results', () => {
     const requestError = new Error('REQUEST FAILED');
     loadPageSpy.mockRejectedValue(requestError);
     streamPageSpy.mockImplementation((response, push) => response.data.forEach(push));
@@ -203,6 +203,67 @@ describe('paging stream', () => {
         expect(err).toEqual(requestError);
         expect(streamPageSpy).not.toHaveBeenCalled();
         expect(getNextPageParamsSpy).not.toHaveBeenCalled();
+        resolve('Test Complete');
+      } catch (err) {
+        reject(err);
+      }
+    }));
+  });
+
+  it('destroys stream if error occurs streaming page', () => {
+    const streamError = new Error('STREAM FAILED');
+    loadPageSpy.mockResolvedValue({data: {itemid: '123s'}, links: { next: 'https://hub.arcgis.com/next'}});
+    streamPageSpy.mockImplementation((_response, _push) =>  { throw streamError; });
+    getNextPageParamsSpy.mockImplementation(response => {
+      return response.links.next
+    } );
+
+    const stream = new PagingStream({
+      firstPageParams: null,
+      loadPage: loadPageSpy,
+      streamPage: streamPageSpy,
+      getNextPageParams: getNextPageParamsSpy
+    });
+
+    stream.on('data', () => {
+      throw Error('Stream should not emit data after erroring!')
+    });
+
+    return new Promise((resolve, reject) => stream.on('error', (err) => {
+      try {
+        expect(err).toEqual(streamError);
+        expect(streamPageSpy).toHaveBeenCalled();
+        expect(getNextPageParamsSpy).toHaveBeenCalled();
+        resolve('Test Complete');
+      } catch (err) {
+        reject(err);
+      }
+    }));
+  });
+
+  it('destroys stream if error occurs when getting next page params', () => {
+    const nextPageError = new Error('PAGING FAILED');
+    loadPageSpy.mockResolvedValue({data: {itemid: '123s'}, links: { next: 'https://hub.arcgis.com/next'}});
+    streamPageSpy.mockImplementation((response, push) => response.data.forEach(push));
+
+    getNextPageParamsSpy.mockImplementation(_response => { throw nextPageError; } );
+
+    const stream = new PagingStream({
+      firstPageParams: null,
+      loadPage: loadPageSpy,
+      streamPage: streamPageSpy,
+      getNextPageParams: getNextPageParamsSpy
+    });
+
+    stream.on('data', () => {
+      throw Error('Stream should not emit data after erroring!')
+    });
+
+    return new Promise((resolve, reject) => stream.on('error', (err) => {
+      try {
+        expect(err).toEqual(nextPageError);
+        expect(streamPageSpy).not.toHaveBeenCalled();
+        expect(getNextPageParamsSpy).toHaveBeenCalled();
         resolve('Test Complete');
       } catch (err) {
         reject(err);
