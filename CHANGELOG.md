@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## 3.0.11
+Fixed
+- Handle stream error [#58](https://github.com/koopjs/koop-provider-hub-search/pull/59)
+
 ## 3.0.10
 Fixed
 - Durable download URLs [#57](https://github.com/koopjs/koop-provider-hub-search/pull/57)
