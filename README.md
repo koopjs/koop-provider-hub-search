@@ -1,3 +1,5 @@
+# ATTENTION: This plugin has been deprecated. Please use [Koop provider hub search ogc](https://github.com/koopjs/koop-provider-hub-search-ogc) instead.
+
 # Koop Provider Hub Search
 
 [![TypeScript version][ts-badge]][typescript-4-3]
